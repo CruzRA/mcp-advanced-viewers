@@ -66,11 +66,11 @@ GID = 0
         modal.Secret.from_name("gsheet-sa-key"),
         modal.Secret.from_name("github-creds"),
     ],
-    schedule=modal.Period(minutes=10),
+    schedule=modal.Period(minutes=50),
     timeout=600,
 )
 def run_pipeline():
-    """Full pipeline cycle — scheduled every 10 minutes."""
+    """Full pipeline cycle — scheduled every 60 minutes."""
     import csv
     import json
     import shutil
