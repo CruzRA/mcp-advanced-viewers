@@ -97,10 +97,52 @@ Options:
 
 ## Running on a Timer
 
-### Loop mode (recommended)
+### Option A: Modal (recommended — serverless)
 
-The simplest approach — runs the full pipeline every 10 minutes in a single
-process. Ctrl+C to stop gracefully.
+Deploy to [Modal.com](https://modal.com) and it runs every 10 minutes in the
+cloud with zero infrastructure management.
+
+**One-time setup:**
+
+```bash
+pip install modal
+modal setup   # opens browser to authenticate
+```
+
+**Create secrets** (store credentials securely in Modal):
+
+```bash
+# Google service account key
+modal secret create gsheet-sa-key \
+  SA_KEY_JSON="$(cat credentials/your-key.json)"
+
+# GitHub push credentials (use a Personal Access Token)
+modal secret create github-creds \
+  GIT_USER="CruzRA" \
+  GIT_EMAIL="cruzra914@gmail.com" \
+  GIT_TOKEN="ghp_xxxxx" \
+  GIT_REPO="https://github.com/CruzRA/mcp-advanced-viewers.git"
+```
+
+**Deploy:**
+
+```bash
+modal deploy pipeline/modal_app.py
+```
+
+**Test a single run:**
+
+```bash
+modal run pipeline/modal_app.py
+```
+
+Once deployed, Modal runs the pipeline every 10 minutes automatically.
+Monitor runs at [modal.com/apps](https://modal.com/apps).
+
+### Option B: Local loop mode
+
+Runs the full pipeline every 10 minutes in a single local process.
+Ctrl+C to stop gracefully.
 
 ```bash
 # Every 10 minutes (default)
@@ -113,12 +155,7 @@ python run.py --loop --interval 300
 nohup python run.py --loop >> output/loop.log 2>&1 &
 ```
 
-Features:
-- Catches errors per cycle and retries next time (doesn't crash)
-- Ctrl+C / SIGTERM stops cleanly after the current cycle finishes
-- Logs each cycle with timestamps
-
-### Alternative: crontab
+### Option C: crontab
 
 ```bash
 crontab -e
