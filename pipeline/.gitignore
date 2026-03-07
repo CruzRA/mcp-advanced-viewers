@@ -1,0 +1,16 @@
+# Service account keys — NEVER commit
+credentials/*.json
+!credentials/.gitkeep
+
+# Generated output
+output/
+
+# Python
+__pycache__/
+*.pyc
+
+# Environment
+.env
+
+# OS
+.DS_Store

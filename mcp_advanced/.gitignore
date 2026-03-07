@@ -1,0 +1,12 @@
+# Raw data (too large for git)
+trajectories/
+*.csv
+*.json
+
+# Old lalalala-based viewers (no longer generated)
+task1_viewer.html
+task2_viewer.html
+generate_mcp_viewer.py
+
+# Keep scripts and generated HTML
+!.gitignore

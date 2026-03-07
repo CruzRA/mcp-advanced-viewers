@@ -1,0 +1,4 @@
+# MCP Advanced Viewer Pipeline
+gspread>=6.0
+google-auth>=2.0
+pandas>=2.0
