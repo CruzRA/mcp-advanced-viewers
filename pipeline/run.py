@@ -11,7 +11,9 @@ Steps:
     4. Commit & push generated viewers to the git repository
 
 Usage:
-    python run.py                          # full pipeline
+    python run.py                          # run once
+    python run.py --loop                   # run every 10 minutes (default)
+    python run.py --loop --interval 300    # run every 5 minutes
     python run.py --skip-download          # reuse cached trajectories
     python run.py --skip-generate          # only pull + download
     python run.py --skip-push              # skip git commit/push
@@ -29,10 +31,12 @@ import csv
 import glob
 import json
 import os
+import signal
 import shutil
 import subprocess
 import sys
 import time
+import traceback
 import urllib.parse
 from datetime import datetime, timezone
 
@@ -241,10 +245,58 @@ def main():
                         help="Skip viewer generation")
     parser.add_argument("--skip-push", action="store_true",
                         help="Skip git commit/push")
+    parser.add_argument("--loop", action="store_true",
+                        help="Run continuously on a timer (default: every 10min)")
+    parser.add_argument("--interval", type=int, default=600,
+                        help="Seconds between runs in --loop mode (default: 600 = 10min)")
     parser.add_argument("--fresh", action="store_true",
                         help="Clear all cached data before running")
     args = parser.parse_args()
 
+    if args.loop:
+        print(f"\n🔄 Loop mode: running every {args.interval}s ({args.interval // 60}min)")
+        print(f"   Press Ctrl+C to stop.\n")
+
+        # Graceful shutdown
+        _running = True
+        def _sigint(sig, frame):
+            nonlocal _running
+            print(f"\n\n⏹  Received interrupt — shutting down after current cycle.")
+            _running = False
+        signal.signal(signal.SIGINT, _sigint)
+        signal.signal(signal.SIGTERM, _sigint)
+
+        cycle = 0
+        while _running:
+            cycle += 1
+            ts = datetime.now().strftime("%H:%M:%S")
+            print(f"\n{'━'*60}")
+            print(f"  CYCLE #{cycle}  —  {ts}")
+            print(f"{'━'*60}")
+            try:
+                run_pipeline(args)
+            except Exception:
+                print(f"\n✗ Pipeline error (will retry next cycle):")
+                traceback.print_exc()
+
+            if not _running:
+                break
+            from datetime import timedelta
+            next_run = (datetime.now() + timedelta(seconds=args.interval)).strftime("%H:%M:%S")
+            print(f"\n💤 Sleeping {args.interval}s — next run at ~{next_run}")
+            # Sleep in small increments so Ctrl+C is responsive
+            for _ in range(args.interval):
+                if not _running:
+                    break
+                time.sleep(1)
+
+        print("\n✓ Loop stopped cleanly.")
+    else:
+        run_pipeline(args)
+
+
+def run_pipeline(args):
+    """Execute one full pipeline cycle."""
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     os.makedirs(CREDS_DIR, exist_ok=True)
 
@@ -268,14 +320,14 @@ def main():
     rows = pull_sheet(args.sheet_id, args.gid)
     if not rows:
         print("  ✗ No data in sheet")
-        sys.exit(1)
+        return
 
     cols = set(rows[0].keys())
     required = {"taskid", "response"}
     missing = required - cols
     if missing:
         print(f"  ✗ Missing columns: {missing}. Found: {sorted(cols)}")
-        sys.exit(1)
+        return
 
     has_traj = "trajectory_urls" in cols
     print(f"  Columns: {sorted(cols)}")

@@ -87,72 +87,45 @@ python run.py [OPTIONS]
 Options:
   --sheet-id ID      Google Sheet ID (default: configured in script)
   --gid N            Worksheet gid (default: 0)
+  --loop             Run continuously on a timer (default: every 10min)
+  --interval SECS    Seconds between runs in --loop mode (default: 600)
   --skip-download    Reuse cached trajectories (faster re-runs)
   --skip-generate    Only pull sheet + download trajectories
   --skip-push        Skip git commit/push
   --fresh            Clear all output before running
 ```
 
-## Setting Up a Cron Job
+## Running on a Timer
 
-### Option A: Simple crontab
+### Loop mode (recommended)
+
+The simplest approach — runs the full pipeline every 10 minutes in a single
+process. Ctrl+C to stop gracefully.
+
+```bash
+# Every 10 minutes (default)
+python run.py --loop
+
+# Every 5 minutes
+python run.py --loop --interval 300
+
+# Run in background with nohup
+nohup python run.py --loop >> output/loop.log 2>&1 &
+```
+
+Features:
+- Catches errors per cycle and retries next time (doesn't crash)
+- Ctrl+C / SIGTERM stops cleanly after the current cycle finishes
+- Logs each cycle with timestamps
+
+### Alternative: crontab
 
 ```bash
 crontab -e
 ```
 
-Add a line to run every hour (adjust as needed):
-
 ```cron
-0 * * * * cd /path/to/pipeline && /usr/bin/python3 run.py >> output/cron.log 2>&1
-```
-
-### Option B: With virtual environment
-
-```bash
-# Create venv once
-python3 -m venv /path/to/pipeline/.venv
-source /path/to/pipeline/.venv/bin/activate
-pip install -r /path/to/pipeline/requirements.txt
-```
-
-Crontab:
-```cron
-0 * * * * cd /path/to/pipeline && .venv/bin/python run.py >> output/cron.log 2>&1
-```
-
-### Option C: launchd (macOS native scheduler)
-
-Create `~/Library/LaunchAgents/com.mcp.viewer-pipeline.plist`:
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
-  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>Label</key>
-    <string>com.mcp.viewer-pipeline</string>
-    <key>ProgramArguments</key>
-    <array>
-        <string>/usr/bin/python3</string>
-        <string>/path/to/pipeline/run.py</string>
-    </array>
-    <key>WorkingDirectory</key>
-    <string>/path/to/pipeline</string>
-    <key>StartInterval</key>
-    <integer>3600</integer>
-    <key>StandardOutPath</key>
-    <string>/path/to/pipeline/output/cron.log</string>
-    <key>StandardErrorPath</key>
-    <string>/path/to/pipeline/output/cron.log</string>
-</dict>
-</plist>
-```
-
-Load it:
-```bash
-launchctl load ~/Library/LaunchAgents/com.mcp.viewer-pipeline.plist
+*/10 * * * * cd /path/to/pipeline && /usr/bin/python3 run.py >> output/cron.log 2>&1
 ```
 
 ## Important Notes
