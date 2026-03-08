@@ -68,9 +68,29 @@ def _redact_s3(val):
     return _S3_SIGNED_RE.sub("[S3 URL REDACTED]", val)
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-OUT_DIR = os.path.join(SCRIPT_DIR, "output")
-CSV_PATH = sys.argv[1] if len(sys.argv) > 1 else os.path.join(OUT_DIR, "sheet_data.csv")
-TRAJ_DIR = os.path.join(OUT_DIR, "trajectories")
+_DEFAULT_OUTPUT = os.path.join(SCRIPT_DIR, "output")
+
+# CLI:  generate_viewers.py [csv_path] [--html-dir DIR]
+# Positional arg 1 = CSV path, --html-dir = where to write HTML viewers
+_csv_arg = None
+_html_dir_arg = None
+_argv = sys.argv[1:]
+while _argv:
+    if _argv[0] == "--html-dir" and len(_argv) > 1:
+        _html_dir_arg = _argv[1]
+        _argv = _argv[2:]
+    elif _argv[0] in ("-h", "--help"):
+        break
+    elif _csv_arg is None and not _argv[0].startswith("-"):
+        _csv_arg = _argv[0]
+        _argv = _argv[1:]
+    else:
+        _argv = _argv[1:]
+
+OUT_DIR = _html_dir_arg or _DEFAULT_OUTPUT        # where HTML viewers go
+DATA_DIR = os.path.join(SCRIPT_DIR, "output")     # where CSV + trajectories live
+CSV_PATH = _csv_arg or os.path.join(DATA_DIR, "sheet_data.csv")
+TRAJ_DIR = os.path.join(DATA_DIR, "trajectories")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 

@@ -1,9 +1,13 @@
 # ── Ignore everything by default ──
 *
 
-# ── Allow pipeline scripts ──
+# ── Allow docs/ for GitHub Pages ──
+!docs/
+!docs/**
 !.gitignore
 !.cursorindexingignore
+
+# ── Allow pipeline scripts ──
 !pipeline/
 !pipeline/**
 
@@ -12,8 +16,7 @@
 !mcp_advanced/*.py
 
 # ── But still ignore secrets & bulky data inside allowed dirs ──
-pipeline/output/*
-!pipeline/output/*.html
+pipeline/output/
 pipeline/credentials/*.json
 pipeline/.env
 pipeline/__pycache__/

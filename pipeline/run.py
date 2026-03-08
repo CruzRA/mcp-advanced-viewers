@@ -43,7 +43,9 @@ from datetime import datetime, timezone
 csv.field_size_limit(sys.maxsize)
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-OUTPUT_DIR = os.path.join(SCRIPT_DIR, "output")
+OUTPUT_DIR = os.path.join(SCRIPT_DIR, "output")          # CSVs, trajectories, data
+REPO_ROOT = os.path.dirname(SCRIPT_DIR)                   # repo root
+HTML_DIR = os.path.join(REPO_ROOT, "docs")                # HTML goes to docs/ for GitHub Pages
 CREDS_DIR = os.path.join(SCRIPT_DIR, "credentials")
 
 # ── Defaults ──────────────────────────────────────────────────────
@@ -361,6 +363,7 @@ def run_pipeline(args):
             "Generate HTML viewers",
             os.path.join(SCRIPT_DIR, "generate_viewers.py"),
             csv_path,
+            "--html-dir", HTML_DIR,
         )
     else:
         print(f"\n⏭ Skipping viewer generation (--skip-generate)")
@@ -378,8 +381,8 @@ def run_pipeline(args):
     print(f"\n{'='*60}")
     print("✓ PIPELINE COMPLETE")
     print(f"{'='*60}")
-    print(f"  Viewers: {OUTPUT_DIR}/<taskid>_viewer.html")
-    print(f"  Homepage: {os.path.join(OUTPUT_DIR, 'index.html')}")
+    print(f"  Viewers: {HTML_DIR}/<taskid>_viewer.html")
+    print(f"  Homepage: {os.path.join(HTML_DIR, 'index.html')}")
 
 
 if __name__ == "__main__":
