@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCP Advanced — 69a774d61de3bd2f3b246a63</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#f0f2f5;--bg2:#fff;--bg3:#f6f8fa;--border:#d8dee4;
+  --text:#1b1f24;--text2:#4d5561;--text3:#656d76;--text4:#8b949e;
+  --accent:#0969da;--green:#1a7f37;--red:#cf222e;--amber:#9a6700;
+  --buser:#0969da;--buser-t:#fff;--bai:#fff;--bai-b:#e1e4e8;--bai-t:#1b1f24;
+  --tool-bg:#f6f8fa;--tool-b:#e1e4e8;--modal-bg:#fff;--overlay:rgba(0,0,0,.4);--code:#f6f8fa;
+}
+body.dark{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#1c2129;--border:#30363d;
+  --text:#e6edf3;--text2:#b1bac4;--text3:#8b949e;--text4:#6e7681;
+  --accent:#58a6ff;--green:#3fb950;--red:#f85149;--amber:#d29922;
+  --buser:#1f6feb;--buser-t:#fff;--bai:#161b22;--bai-b:#30363d;--bai-t:#e6edf3;
+  --tool-bg:#0d1117;--tool-b:#30363d;--modal-bg:#161b22;--overlay:rgba(0,0,0,.6);--code:#0d1117;
+}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;height:100vh;display:flex;flex-direction:column;}
+
+/* ── Top bar ── */
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.topbar h1{font-size:.92rem;font-weight:700;white-space:nowrap;}
+.topbar .info{font-size:.7rem;color:var(--text4);white-space:nowrap;}
+.btn{background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:4px 11px;font-size:.7rem;font-weight:600;color:var(--text3);cursor:pointer;font-family:inherit;white-space:nowrap;}
+.btn:hover{opacity:.8;}
+
+/* ── Tabs in topbar ── */
+.top-tabs{display:flex;gap:2px;margin-left:8px;}
+.top-tab{padding:5px 12px;font-size:.72rem;font-weight:600;color:var(--text3);cursor:pointer;border:none;background:none;font-family:inherit;border-bottom:2px solid transparent;transition:all .15s;}
+.top-tab:hover{color:var(--text);}.top-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+/* ── Main layout ── */
+.main-area{flex:1;display:flex;overflow:hidden;position:relative;}
+.page{display:none;flex:1;overflow:hidden;min-width:0;}.page.active{display:flex;}
+
+/* ── Run selector ── */
+.run-selector{display:flex;gap:4px;padding:10px 20px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;}
+.run-btn{padding:5px 12px;font-size:.7rem;font-weight:600;color:var(--text3);cursor:pointer;border:1px solid var(--border);background:var(--bg3);border-radius:6px;font-family:inherit;display:flex;align-items:center;gap:5px;transition:all .15s;}
+.run-btn:hover{background:var(--border);}.run-btn.active{color:var(--accent);border-color:var(--accent);background:rgba(9,105,218,0.04);}
+body.dark .run-btn.active{background:rgba(88,166,255,0.06);}
+.badge{font-size:.55rem;font-weight:600;color:#fff;padding:1px 6px;border-radius:3px;text-transform:uppercase;}
+
+/* ── Chat area ── */
+.chat-area{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;}
+.chat-container{flex:1;overflow-y:auto;padding:20px 0;}
+.chat-inner{max-width:800px;margin:0 auto;padding:0 20px;display:flex;flex-direction:column;gap:3px;}
+.msg{display:flex;gap:8px;max-width:88%;}
+.msg-user{align-self:flex-end;flex-direction:row-reverse;}
+.msg-assistant{align-self:flex-start;}
+.avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;flex-shrink:0;margin-top:2px;}
+.avatar-user{background:var(--accent);color:#fff;}
+.avatar-assistant{background:var(--text);color:var(--bg);}
+.bubble{padding:9px 13px;border-radius:14px;font-size:.8rem;line-height:1.55;word-break:break-word;}
+.bubble-user{background:var(--buser);color:var(--buser-t);border-bottom-right-radius:4px;}
+.bubble-assistant{background:var(--bai);color:var(--bai-t);border:1px solid var(--bai-b);border-bottom-left-radius:4px;}
+.msg-ts{font-size:.58rem;color:var(--text4);margin-top:2px;padding:0 4px;}
+.msg-user .msg-ts{text-align:right;}
+
+/* ── Thinking ── */
+.thinking{font-size:.66rem;color:var(--text4);font-style:italic;margin-bottom:3px;cursor:pointer;}
+.thinking::before{content:'\1F4AD ';}
+.thinking-text{display:none;font-size:.64rem;color:var(--text4);background:var(--bg3);padding:5px 7px;border-radius:5px;margin-bottom:3px;font-style:normal;max-height:200px;overflow-y:auto;white-space:pre-wrap;font-family:'SF Mono',ui-monospace,monospace;line-height:1.4;}
+
+/* ── Tool chips ── */
+.tool-group{margin-top:6px;display:flex;flex-wrap:wrap;gap:4px;}
+.tool-chip{display:inline-flex;align-items:center;gap:4px;background:var(--tool-bg);border:1px solid var(--tool-b);border-radius:6px;padding:3px 9px;font-size:.66rem;font-weight:500;color:var(--accent);cursor:pointer;transition:all .15s;}
+.tool-chip:hover{opacity:.7;}
+.tool-chip::before{content:'\26A1';font-size:.6rem;}
+
+/* ── Modal ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:var(--overlay);z-index:1000;align-items:center;justify-content:center;}
+.modal-overlay.active{display:flex;}
+.modal{background:var(--modal-bg);border:1px solid var(--border);border-radius:10px;width:680px;max-width:92vw;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 8px 30px rgba(0,0,0,.2);}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);}
+.modal-title{font-size:.82rem;font-weight:700;color:var(--accent);}
+.modal-close{background:none;border:none;font-size:1.1rem;color:var(--text3);cursor:pointer;padding:2px 6px;border-radius:4px;}
+.modal-close:hover{background:var(--bg3);}
+.modal-body{padding:14px 16px;overflow-y:auto;flex:1;}
+.modal-section{margin-bottom:14px;}.modal-section:last-child{margin-bottom:0;}
+.modal-label{font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text4);margin-bottom:5px;}
+.modal-code{font-family:'SF Mono',ui-monospace,monospace;font-size:.68rem;color:var(--text2);background:var(--code);border:1px solid var(--border);border-radius:6px;padding:10px 12px;white-space:pre-wrap;word-break:break-all;max-height:300px;overflow-y:auto;line-height:1.5;}
+
+/* ── Oracle slide-out panel (left side of Agent Runs page) ── */
+.oracle-tab{position:absolute;left:0;top:50%;transform:translateY(-50%);background:var(--bg2);border:1px solid var(--border);border-left:none;border-radius:0 8px 8px 0;padding:10px 6px;cursor:pointer;writing-mode:vertical-rl;text-orientation:mixed;font-size:.7rem;font-weight:600;color:var(--text3);z-index:50;transition:all .2s;transform:translateY(-50%) rotate(180deg);}
+.oracle-tab:hover{background:var(--bg3);}
+body.oracle-open .oracle-tab{display:none;}
+.oracle-panel{position:absolute;left:0;top:0;bottom:0;width:360px;background:var(--bg2);border-right:1px solid var(--border);transform:translateX(-100%);transition:transform .25s ease;z-index:40;display:flex;flex-direction:column;box-shadow:4px 0 20px rgba(0,0,0,.06);}
+body.dark .oracle-panel{box-shadow:4px 0 20px rgba(0,0,0,.3);}
+body.oracle-open .oracle-panel{transform:translateX(0);}
+.op-header{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.op-title{font-size:.82rem;font-weight:700;}
+.op-close{background:none;border:none;font-size:1rem;color:var(--text3);cursor:pointer;padding:2px 6px;border-radius:4px;}
+.op-close:hover{background:var(--bg3);}
+.op-list{flex:1;overflow-y:auto;padding:10px 14px;}
+.op-event{padding:8px 12px;margin-bottom:6px;background:var(--bg3);border-radius:6px;font-size:.75rem;color:var(--text2);line-height:1.5;border-left:3px solid var(--accent);}
+
+/* ── Rubric slide-out panel (on Agent Runs page) ── */
+.rubric-tab{position:absolute;right:0;top:50%;transform:translateY(-50%);background:var(--bg2);border:1px solid var(--border);border-right:none;border-radius:8px 0 0 8px;padding:10px 6px;cursor:pointer;writing-mode:vertical-rl;text-orientation:mixed;font-size:.7rem;font-weight:600;color:var(--text3);z-index:50;transition:all .2s;}
+.rubric-tab:hover{background:var(--bg3);}
+body.rubric-open .rubric-tab{display:none;}
+.rubric-panel{position:absolute;right:0;top:0;bottom:0;width:380px;background:var(--bg2);border-left:1px solid var(--border);transform:translateX(100%);transition:transform .25s ease;z-index:40;display:flex;flex-direction:column;box-shadow:-4px 0 20px rgba(0,0,0,.06);}
+body.dark .rubric-panel{box-shadow:-4px 0 20px rgba(0,0,0,.3);}
+body.rubric-open .rubric-panel{transform:translateX(0);}
+.rp-header{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.rp-title{font-size:.82rem;font-weight:700;}
+.rp-score{font-size:.78rem;font-weight:700;padding:3px 10px;border-radius:12px;}
+.rp-score-pos{color:var(--green);background:rgba(26,127,55,.08);}
+.rp-score-neg{color:var(--red);background:rgba(207,34,46,.08);}
+.rp-score-zero{color:var(--text4);background:var(--bg3);}
+.rp-close{background:none;border:none;font-size:1rem;color:var(--text3);cursor:pointer;padding:2px 6px;border-radius:4px;}
+.rp-close:hover{background:var(--bg3);}
+.rp-list{flex:1;overflow-y:auto;padding:8px 0;}
+.rp-item{padding:8px 14px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;align-items:flex-start;gap:8px;transition:background .1s;}
+.rp-item:hover{background:var(--bg3);}
+.rp-icon{flex-shrink:0;font-size:.78rem;font-weight:700;margin-top:1px;width:14px;text-align:center;}
+.rp-icon-pass{color:var(--green);}
+.rp-icon-fail{color:var(--red);}
+.rp-icon-na{color:var(--text4);}
+.rp-content{flex:1;min-width:0;}
+.rp-text{font-size:.72rem;color:var(--text2);line-height:1.45;}
+.rp-meta-row{display:flex;gap:5px;margin-top:3px;align-items:center;}
+.rp-weight{font-family:'SF Mono',ui-monospace,monospace;font-size:.6rem;font-weight:600;padding:0 4px;border-radius:3px;height:16px;line-height:16px;}
+.rp-w-pos{color:var(--green);background:rgba(26,127,55,.08);}
+.rp-w-neg{color:var(--red);background:rgba(207,34,46,.08);}
+.rp-w-neut{color:var(--text4);background:var(--bg3);}
+.rp-cat{font-size:.58rem;color:var(--text4);}
+.rp-just{display:none;font-size:.66rem;color:var(--text3);background:var(--bg3);padding:6px 8px;border-radius:5px;margin-top:5px;line-height:1.45;}
+.rp-item.expanded .rp-just{display:block;}
+.rp-list::-webkit-scrollbar{width:4px;}
+.rp-list::-webkit-scrollbar-track{background:transparent;}
+.rp-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+/* ── Overview tab ── */
+.overview-content{flex:1;overflow-y:auto;padding:30px;max-width:940px;margin:0 auto;width:100%;min-width:0;}
+.section{margin-bottom:1.8rem;}
+.section-title{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text4);margin-bottom:.5rem;}
+.prompt-box{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:6px;padding:12px 16px;font-size:.82rem;color:var(--text2);line-height:1.7;overflow-wrap:anywhere;word-break:break-word;overflow:hidden;}
+.oracle-item{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:6px;padding:8px 14px;margin-bottom:6px;font-size:.78rem;color:var(--text2);line-height:1.6;}
+.env-row{display:flex;gap:8px;align-items:baseline;padding:3px 0;font-size:.74rem;border-bottom:1px solid var(--border);}.env-row:last-child{border-bottom:none;}
+.env-key{color:var(--text3);font-weight:600;min-width:120px;font-size:.7rem;}
+.env-row code{font-family:'SF Mono',ui-monospace,monospace;font-size:.68rem;color:var(--text2);background:var(--code);padding:1px 5px;border-radius:3px;border:1px solid var(--border);}
+
+/* ── Stats bar ── */
+.stats-bar{display:flex;gap:24px;margin-bottom:1.8rem;flex-wrap:wrap;}
+.stat{display:flex;flex-direction:column;}
+.stat-label{font-size:.62rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text4);font-weight:600;margin-bottom:2px;}
+.stat-value{font-size:1.1rem;font-weight:700;font-family:'SF Mono',ui-monospace,monospace;}
+.stat-green{color:var(--green);}.stat-red{color:var(--red);}.stat-amber{color:var(--amber);}
+
+/* ── Runs summary table ── */
+.runs-summary-tbl td code{font-size:.7rem;background:var(--code);padding:1px 5px;border-radius:3px;border:1px solid var(--border);}
+
+/* ── Tool breakdown ── */
+.tool-breakdown{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:8px 14px;max-width:500px;display:flex;flex-direction:column;gap:1px;}
+.tb-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border);font-size:.76rem;}
+.tb-row:last-child{border-bottom:none;}
+.tb-name{color:var(--accent);font-weight:500;font-family:'SF Mono',ui-monospace,monospace;font-size:.72rem;}
+.tb-count{font-family:'SF Mono',ui-monospace,monospace;font-size:.72rem;font-weight:600;color:var(--text);background:var(--bg3);padding:1px 8px;border-radius:10px;min-width:28px;text-align:center;}
+
+/* ── Rubric table ── */
+table{width:100%;border-collapse:collapse;font-size:.8rem;background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+th,td{padding:8px 12px;text-align:left;border-bottom:1px solid #eaeef2;vertical-align:top;}
+body.dark th,body.dark td{border-bottom-color:#21262d;}
+th{background:var(--bg3);color:var(--text3);font-weight:600;font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;position:sticky;top:0;z-index:10;border-bottom:1px solid var(--border);}
+td.label{text-align:center;color:var(--text4);font-weight:600;font-size:.72rem;width:40px;}
+.model-header{width:80px;text-align:center;font-size:.65rem;}
+.crit-text{display:block;margin-bottom:3px;font-size:.78rem;color:var(--text);}
+.crit-meta{display:flex;gap:5px;align-items:center;margin-top:2px;}
+.cat{display:inline-flex;align-items:center;font-size:.58rem;font-weight:500;color:var(--text3);background:var(--bg3);border-radius:9px;padding:0 7px;height:17px;line-height:17px;white-space:nowrap;}
+body.dark .cat{color:var(--text4);background:rgba(110,118,129,0.1);}
+td.pass{text-align:center;font-weight:600;font-size:.82rem;color:var(--green);width:80px;}
+td.fail{text-align:center;font-weight:600;font-size:.82rem;color:var(--red);width:80px;}
+td.na{text-align:center;font-weight:600;font-size:.82rem;color:var(--text4);width:80px;}
+.crit-row{cursor:pointer;transition:background .1s;}
+.crit-row:hover td{background:var(--bg3);}
+body.dark .crit-row:hover td{background:rgba(136,152,170,0.06);}
+.score-row td{border-top:2px solid var(--border);background:var(--bg3);font-size:.92rem;padding:10px 12px;}
+.score-pos{text-align:center;color:var(--green);font-weight:700;font-size:.95rem;}
+.score-mid{text-align:center;color:var(--amber);font-weight:700;font-size:.95rem;}
+.score-neg{text-align:center;color:var(--red);font-weight:700;font-size:.95rem;}
+.score-zero{text-align:center;color:var(--text4);font-weight:700;font-size:.95rem;}
+
+/* Justification panel */
+.justification-row td{padding:0!important;border-bottom:1px solid #eaeef2;background:var(--bg2);}
+body.dark .justification-row td{border-bottom-color:#21262d;}
+.j-cell{padding:0!important;}
+.j-panel{background:var(--bg3);margin:0 12px 8px 52px;border-radius:6px;border:1px solid var(--border);padding:10px 14px;display:flex;flex-direction:column;gap:6px;}
+body.dark .j-panel{background:#111519;border-color:#21262d;}
+.j-entry{display:flex;align-items:flex-start;gap:8px;font-size:.72rem;line-height:1.5;}
+.j-icon{flex-shrink:0;font-weight:700;font-size:.78rem;width:14px;text-align:center;margin-top:1px;}
+.j-pass{color:var(--green);}.j-fail{color:var(--red);}
+.j-model{flex-shrink:0;color:var(--text);font-weight:600;font-size:.7rem;min-width:80px;}
+.j-text{color:var(--text3);}.j-text em{color:var(--text4);font-style:italic;}
+.legend{display:flex;gap:1.5rem;margin-bottom:1.2rem;font-size:.75rem;color:var(--text3);}
+.legend .g{color:var(--green);font-weight:600;}.legend .r{color:var(--red);font-weight:600;}
+
+/* ── Markdown ── */
+.md-content{font-size:.8rem;line-height:1.6;}
+.md-content p{margin-bottom:.5em;}.md-content p:last-child{margin-bottom:0;}
+.md-content h1,.md-content h2,.md-content h3,.md-content h4{font-weight:700;margin:.6em 0 .3em;line-height:1.3;}
+.md-content h1{font-size:1.1em;}.md-content h2{font-size:1em;}.md-content h3{font-size:.92em;}.md-content h4{font-size:.86em;}
+.md-content ul,.md-content ol{margin:.3em 0 .3em 1.2em;padding:0;}
+.md-content li{margin-bottom:.2em;}
+.md-content code{font-family:'SF Mono',ui-monospace,monospace;font-size:.85em;background:var(--code);padding:1px 4px;border-radius:3px;border:1px solid var(--border);}
+.md-content pre{background:var(--code);border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin:.4em 0;overflow-x:auto;}
+.md-content pre code{background:none;border:none;padding:0;font-size:.78em;line-height:1.45;}
+.md-content blockquote{border-left:3px solid var(--border);padding-left:10px;margin:.4em 0;color:var(--text3);}
+.md-content strong{font-weight:600;}.md-content a{color:var(--accent);text-decoration:none;}
+
+/* ── Scrollbars ── */
+::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+.empty{text-align:center;color:var(--text4);padding:80px 20px;font-size:.85rem;}
+
+/* ── Walkthrough Tour ── */
+.wt-backdrop{position:fixed;top:0;left:0;width:100%;height:100%;z-index:9000;pointer-events:none;transition:opacity .25s;}
+.wt-backdrop.active{pointer-events:auto;}
+.wt-backdrop svg{position:absolute;top:0;left:0;width:100%;height:100%;}
+.wt-spotlight{position:fixed;z-index:9001;border-radius:8px;box-shadow:0 0 0 4000px rgba(0,0,0,.55);pointer-events:none;transition:all .3s ease;}
+.wt-tooltip{position:fixed;z-index:9002;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px 20px;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,.25);font-size:.82rem;line-height:1.55;transition:all .3s ease;pointer-events:auto;}
+.wt-tooltip-title{font-weight:700;font-size:.9rem;margin-bottom:6px;color:var(--text);}
+.wt-tooltip-body{color:var(--text2);margin-bottom:14px;}
+.wt-tooltip-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.wt-step-count{font-size:.68rem;color:var(--text4);font-weight:500;}
+.wt-btn{border:1px solid var(--border);border-radius:6px;padding:5px 14px;font-size:.72rem;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;background:var(--bg3);color:var(--text2);}
+.wt-btn:hover{background:var(--border);}
+.wt-btn-primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+.wt-btn-primary:hover{opacity:.85;}
+.wt-btn-skip{background:transparent;border:none;color:var(--text4);font-size:.7rem;cursor:pointer;font-family:inherit;}
+.wt-btn-skip:hover{color:var(--text2);}
+.wt-arrow{position:absolute;width:12px;height:12px;background:var(--bg2);border:1px solid var(--border);transform:rotate(45deg);z-index:-1;}
+.wt-arrow-top{top:-7px;left:24px;border-right:none;border-bottom:none;}
+.wt-arrow-bottom{bottom:-7px;left:24px;border-left:none;border-top:none;}
+.wt-arrow-left{left:-7px;top:16px;border-top:none;border-right:none;}
+.wt-pulse{animation:wt-pulse-ring 1.8s ease-out infinite;}
+@keyframes wt-pulse-ring{0%{box-shadow:0 0 0 4000px rgba(0,0,0,.55),0 0 0 0 rgba(9,105,218,.4)}70%{box-shadow:0 0 0 4000px rgba(0,0,0,.55),0 0 0 10px rgba(9,105,218,0)}100%{box-shadow:0 0 0 4000px rgba(0,0,0,.55),0 0 0 0 rgba(9,105,218,0)}}
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="topbar">
+  <h1><a href="index.html" style="color:inherit;text-decoration:none;">MCP Advanced</a></h1>
+  <div class="top-tabs">
+    <button class="top-tab active" onclick="showPage('overview',this)">Overview</button>
+    <button class="top-tab" onclick="showPage('runs',this)">Agent Runs (6) &middot; max 0 msgs &middot; 0 tools</button>
+    <button class="top-tab" onclick="showPage('rubric',this)">Rubric Scorecard (17)</button>
+  </div>
+  <span class="info" id="info"><a href="https://dashboard.scale.com/corp/genai-ops-hub/search/69a774d61de3bd2f3b246a63" target="_blank" style="color:var(--accent)">69a774d61de3bd2f3b246a63</a> &middot; chloe_vance &middot; Meher Satya Swaroop Malina &middot; <a href="https://dashboard.scale.com/corp/genai-ops-hub/search/swaroop.malina@gmail.com+outlier" target="_blank" style="color:var(--accent)">swaroop.malina@gmail.com+outlier</a></span>
+  <button class="btn" id="theme-btn" onclick="toggleTheme()">&#9679; Dark</button>
+</div>
+
+<!-- ═══ Overview page ═══ -->
+<div class="page active" id="page-overview">
+  <div class="overview-content">
+    <div class="stats-bar" id="wt-stats-bar">
+      <div class="stat"><span class="stat-label">Agent Runs</span><span class="stat-value stat-green">6/6</span></div>
+      <div class="stat"><span class="stat-label">Verifier Pass</span><span class="stat-value stat-red">1/6</span></div>
+      <div class="stat"><span class="stat-label">Pass@1</span><span class="stat-value stat-amber">17%</span></div>
+      <div class="stat"><span class="stat-label">Criteria</span><span class="stat-value">17</span></div>
+      <div class="stat"><span class="stat-label">Max Tools</span><span class="stat-value ">0</span></div>
+      <div class="stat"><span class="stat-label">Min Tools</span><span class="stat-value ">0</span></div>
+      <div class="stat"><span class="stat-label">Max Tools (Pass)</span><span class="stat-value stat-green">N/A</span></div>
+      <div class="stat"><span class="stat-label">Min Tools (Pass)</span><span class="stat-value stat-green">N/A</span></div>
+    </div>
+    <div id="wt-runs-summary">
+    <div class="section">
+      <div class="section-title">Runs Summary</div>
+      <table class="runs-summary-tbl">
+        <thead><tr>
+          <th>Run</th><th>Model</th><th>Agent</th><th>Verifier</th><th>Msgs</th><th>Tools</th><th>Rubrics</th>
+        </tr></thead>
+        <tbody><tr><td style="font-weight:600">#1</td><td><code style="font-size:.72rem">claude-opus-4-6</code></td><td class="pass">passed</td><td class="fail">failed</td><td>&mdash;</td><td>&mdash;</td><td><span style="color:var(--green);font-weight:600">15&#10003;</span> / <span style="color:var(--red);font-weight:600">2&#10007;</span> <span style="color:var(--text4)">of 17</span></td></tr><tr><td style="font-weight:600">#2</td><td><code style="font-size:.72rem">claude-opus-4-6</code></td><td class="pass">passed</td><td class="fail">failed</td><td>&mdash;</td><td>&mdash;</td><td><span style="color:var(--green);font-weight:600">16&#10003;</span> / <span style="color:var(--red);font-weight:600">1&#10007;</span> <span style="color:var(--text4)">of 17</span></td></tr><tr><td style="font-weight:600">#3</td><td><code style="font-size:.72rem">claude-opus-4-6</code></td><td class="pass">passed</td><td class="pass">passed</td><td>&mdash;</td><td>&mdash;</td><td><span style="color:var(--green);font-weight:600">17&#10003;</span> / <span style="color:var(--red);font-weight:600">0&#10007;</span> <span style="color:var(--text4)">of 17</span></td></tr><tr><td style="font-weight:600">#4</td><td><code style="font-size:.72rem">claude-opus-4-6</code></td><td class="pass">passed</td><td class="fail">failed</td><td>&mdash;</td><td>&mdash;</td><td><span style="color:var(--green);font-weight:600">15&#10003;</span> / <span style="color:var(--red);font-weight:600">2&#10007;</span> <span style="color:var(--text4)">of 17</span></td></tr><tr><td style="font-weight:600">#5</td><td><code style="font-size:.72rem">claude-opus-4-6</code></td><td class="pass">passed</td><td class="fail">failed</td><td>&mdash;</td><td>&mdash;</td><td><span style="color:var(--green);font-weight:600">14&#10003;</span> / <span style="color:var(--red);font-weight:600">3&#10007;</span> <span style="color:var(--text4)">of 17</span></td></tr><tr><td style="font-weight:600">#6</td><td><code style="font-size:.72rem">claude-opus-4-6</code></td><td class="pass">passed</td><td class="fail">failed</td><td>&mdash;</td><td>&mdash;</td><td><span style="color:var(--green);font-weight:600">16&#10003;</span> / <span style="color:var(--red);font-weight:600">1&#10007;</span> <span style="color:var(--text4)">of 17</span></td></tr></tbody>
+      </table>
+    </div></div>
+    <div id="wt-tool-breakdown"></div>
+    <div class="section" id="wt-prompt">
+      <div class="section-title">Prompt</div>
+      <div style="display:flex;gap:8px;max-width:800px;">
+        <div class="avatar avatar-user">U</div>
+        <div><div class="bubble bubble-user" style="border-bottom-left-radius:14px;"><div class="md-content" id="prompt-md"></div></div></div>
+      </div>
+    </div>
+    <div class="section" id="wt-oracle"><div class="section-title">Oracle Events</div><div class="oracle-item">- Search for emails related to Mosaic Robotics, Tamara Byrd, or Emeka Diallo to find the client communications and understand why Tamara reached out.</div><div class="oracle-item">- Search CRM for the Mosaic Robotics company record and related deals to understand the account scope and history.</div><div class="oracle-item">- Search Airtable for Mosaic relocation records to find all April moves and their statuses.</div><div class="oracle-item">- Search Linear for Mosaic-related issues or tickets to find any open operational or compliance items.</div><div class="oracle-item">- Search QuickBooks for Mosaic-related invoices, bills, or accruals to identify financial exposure and open items.</div><div class="oracle-item">- Search Slack for Mosaic-related messages to find internal discussions about issues on the account.</div><div class="oracle-item">- Search for Heartland Movers in QuickBooks or email to find the Q1 billing dispute ($4,800 overbilling on a $12,800 invoice).</div><div class="oracle-item">- List Mosaic relocation records from the Airtable Relocations table (7 records exist) and notice that the Mosaic Client Accounts record shows &quot;Total Relocations: 3&quot; and Status: &quot;Onboarding,&quot; which is outdated.</div><div class="oracle-item">- Look up David&#x27;s email address using a contacts or CRM search tool.</div><div class="oracle-item">- Send an email (via send_email) to david.chen@moveops.com summarizing all findings across the Mosaic account.</div></div>
+    <div class="section" id="wt-env"><div class="section-title">Environments</div>
+      <div style="max-width:700px">
+        <div class="env-group" style="margin-bottom:12px;">
+              <div style="font-weight:600;font-size:.76rem;color:var(--accent);margin-bottom:4px;display:flex;align-items:center;gap:6px;">
+                <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);"></span>Verifier Env
+              </div>
+              <div style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;"><div class="env-row"><span class="env-key">agent_api_url</span><a href="https://sandbox.internal.scale.com/sandbox/sandbox-vm-3ece4309e2db4c3f-18766" target="_blank" style="color:var(--accent);font-size:.72rem;word-break:break-all">https://sandbox.internal.scale.com/sandbox/sandbox-vm-3ece4309e2db4c3f-18766</a></div><div class="env-row"><span class="env-key">agent_env_task.num_steps</span><code>4</code></div><div class="env-row"><span class="env-key">agent_env_task.task_id</span><code>task-snapshot-multi-caf64d-654b73fb</code></div><div class="env-row"><span class="env-key">agent_env_task.task_version</span><code>1</code></div><div class="env-row"><span class="env-key">agent_sandbox_id</span><code>vm-3ece4309e2db4c3f</code></div><div class="env-row"><span class="env-key">db_mcp_url</span><a href="https://sandbox.internal.scale.com/sandbox/sandbox-vm-9a2ab80b800947d1-18767/mcp" target="_blank" style="color:var(--accent);font-size:.72rem;word-break:break-all">https://sandbox.internal.scale.com/sandbox/sandbox-vm-9a2ab80b800947d1-18767/mcp</a></div><div class="env-row"><span class="env-key">db_web_url</span><a href="https://sandbox.internal.scale.com/sandbox/sandbox-vm-9a2ab80b800947d1-8081/" target="_blank" style="color:var(--accent);font-size:.72rem;word-break:break-all">https://sandbox.internal.scale.com/sandbox/sandbox-vm-9a2ab80b800947d1-8081/</a></div><div class="env-row"><span class="env-key">env_id</span><code>multi-caf64d</code></div><div class="env-row"><span class="env-key">env_version</span><code>10</code></div><div class="env-row"><span class="env-key">gateway_url</span><a href="https://sandbox.internal.scale.com/sandbox/sandbox-vm-9a2ab80b800947d1-18765" target="_blank" style="color:var(--accent);font-size:.72rem;word-break:break-all">https://sandbox.internal.scale.com/sandbox/sandbox-vm-9a2ab80b800947d1-18765</a></div><div class="env-row"><span class="env-key">mcp_url</span><a href="https://sandbox.internal.scale.com/sandbox/sandbox-vm-9a2ab80b800947d1-18765/mcp" target="_blank" style="color:var(--accent);font-size:.72rem;word-break:break-all">https://sandbox.internal.scale.com/sandbox/sandbox-vm-9a2ab80b800947d1-18765/mcp</a></div><div class="env-row"><span class="env-key">sandbox_id</span><code>vm-9a2ab80b800947d1</code></div><div class="env-row"><span class="env-key">universe_id</span><code>mcp-advanced-3-1-moveops-v3</code></div><div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);"><div style="font-weight:600;font-size:.72rem;color:var(--text3);margin-bottom:4px;">Verifier Run Task IDs</div><div class="env-row"><span class="env-key">Run #1, #2, #3, #4, #5, #6</span><code>task-snapshot-multi-caf64d-654b73fb-verify</code></div></div></div>
+            </div><div class="env-group" style="margin-bottom:12px;">
+              <div style="font-weight:600;font-size:.76rem;color:var(--accent);margin-bottom:4px;display:flex;align-items:center;gap:6px;">
+                <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);"></span>Agent Runs Env
+              </div>
+              <div style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;"><div class="env-row"><span class="env-key">agent_api_url</span><a href="https://sandbox.internal.scale.com/sandbox/sandbox-vm-3ece4309e2db4c3f-18766" target="_blank" style="color:var(--accent);font-size:.72rem;word-break:break-all">https://sandbox.internal.scale.com/sandbox/sandbox-vm-3ece4309e2db4c3f-18766</a></div><div class="env-row"><span class="env-key">agent_env_task.num_steps</span><code>4</code></div><div class="env-row"><span class="env-key">agent_env_task.task_id</span><code>task-snapshot-multi-caf64d-654b73fb</code></div><div class="env-row"><span class="env-key">agent_env_task.task_version</span><code>1</code></div><div class="env-row"><span class="env-key">agent_sandbox_id</span><code>vm-3ece4309e2db4c3f</code></div><div class="env-row"><span class="env-key">db_mcp_url</span><a href="https://sandbox.internal.scale.com/sandbox/sandbox-vm-9a2ab80b800947d1-18767/mcp" target="_blank" style="color:var(--accent);font-size:.72rem;word-break:break-all">https://sandbox.internal.scale.com/sandbox/sandbox-vm-9a2ab80b800947d1-18767/mcp</a></div><div class="env-row"><span class="env-key">db_web_url</span><a href="https://sandbox.internal.scale.com/sandbox/sandbox-vm-9a2ab80b800947d1-8081/" target="_blank" style="color:var(--accent);font-size:.72rem;word-break:break-all">https://sandbox.internal.scale.com/sandbox/sandbox-vm-9a2ab80b800947d1-8081/</a></div><div class="env-row"><span class="env-key">env_id</span><code>multi-caf64d</code></div><div class="env-row"><span class="env-key">env_version</span><code>10</code></div><div class="env-row"><span class="env-key">gateway_url</span><a href="https://sandbox.internal.scale.com/sandbox/sandbox-vm-9a2ab80b800947d1-18765" target="_blank" style="color:var(--accent);font-size:.72rem;word-break:break-all">https://sandbox.internal.scale.com/sandbox/sandbox-vm-9a2ab80b800947d1-18765</a></div><div class="env-row"><span class="env-key">mcp_url</span><a href="https://sandbox.internal.scale.com/sandbox/sandbox-vm-9a2ab80b800947d1-18765/mcp" target="_blank" style="color:var(--accent);font-size:.72rem;word-break:break-all">https://sandbox.internal.scale.com/sandbox/sandbox-vm-9a2ab80b800947d1-18765/mcp</a></div><div class="env-row"><span class="env-key">sandbox_id</span><code>vm-9a2ab80b800947d1</code></div><div class="env-row"><span class="env-key">universe_id</span><code>snapshot-multi-caf64d-654b73fb</code></div></div>
+            </div><div class="env-group" style="margin-bottom:12px;">
+              <div style="font-weight:600;font-size:.76rem;color:var(--accent);margin-bottom:4px;display:flex;align-items:center;gap:6px;">
+                <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);"></span>Explorer Env
+              </div>
+              <div style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;"><div class="env-row"><span class="env-key">agent_api_url</span><a href="https://sandbox.internal.scale.com/sandbox/sandbox-vm-3ece4309e2db4c3f-18766" target="_blank" style="color:var(--accent);font-size:.72rem;word-break:break-all">https://sandbox.internal.scale.com/sandbox/sandbox-vm-3ece4309e2db4c3f-18766</a></div><div class="env-row"><span class="env-key">agent_sandbox_id</span><code>vm-3ece4309e2db4c3f</code></div><div class="env-row"><span class="env-key">db_mcp_url</span><a href="https://sandbox.internal.scale.com/sandbox/sandbox-vm-9a2ab80b800947d1-18767/mcp" target="_blank" style="color:var(--accent);font-size:.72rem;word-break:break-all">https://sandbox.internal.scale.com/sandbox/sandbox-vm-9a2ab80b800947d1-18767/mcp</a></div><div class="env-row"><span class="env-key">db_web_url</span><a href="https://sandbox.internal.scale.com/sandbox/sandbox-vm-9a2ab80b800947d1-8081/" target="_blank" style="color:var(--accent);font-size:.72rem;word-break:break-all">https://sandbox.internal.scale.com/sandbox/sandbox-vm-9a2ab80b800947d1-8081/</a></div><div class="env-row"><span class="env-key">env_id</span><code>multi-caf64d</code></div><div class="env-row"><span class="env-key">env_version</span><code>10</code></div><div class="env-row"><span class="env-key">gateway_url</span><a href="https://sandbox.internal.scale.com/sandbox/sandbox-vm-9a2ab80b800947d1-18765" target="_blank" style="color:var(--accent);font-size:.72rem;word-break:break-all">https://sandbox.internal.scale.com/sandbox/sandbox-vm-9a2ab80b800947d1-18765</a></div><div class="env-row"><span class="env-key">mcp_url</span><a href="https://sandbox.internal.scale.com/sandbox/sandbox-vm-9a2ab80b800947d1-18765/mcp" target="_blank" style="color:var(--accent);font-size:.72rem;word-break:break-all">https://sandbox.internal.scale.com/sandbox/sandbox-vm-9a2ab80b800947d1-18765/mcp</a></div><div class="env-row"><span class="env-key">sandbox_id</span><code>vm-9a2ab80b800947d1</code></div><div class="env-row"><span class="env-key">ttl_seconds</span><code>1209600</code></div><div class="env-row"><span class="env-key">universe_id</span><code>mcp-advanced-3-1-moveops-v3</code></div><div class="env-row"><span class="env-key">vm_created_at</span><code>2026-03-04T20:35:16.608Z</code></div></div>
+            </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Agent Runs page (chat UI) ═══ -->
+<div class="page" id="page-runs" style="flex-direction:column;">
+  <div class="run-selector" id="run-selector"><button class="run-btn active" data-run-idx="0">Run #1 <span class="badge" style="background:#cf222e">FAILED</span> <span style="font-size:.6rem;color:var(--text3)">15/17 rubrics</span> <span style="font-size:.6rem;color:var(--text4)">no trajectory</span></button><button class="run-btn " data-run-idx="1">Run #2 <span class="badge" style="background:#cf222e">FAILED</span> <span style="font-size:.6rem;color:var(--text3)">16/17 rubrics</span> <span style="font-size:.6rem;color:var(--text4)">no trajectory</span></button><button class="run-btn " data-run-idx="2">Run #3 <span class="badge" style="background:#1a7f37">PASSED</span> <span style="font-size:.6rem;color:var(--text3)">17/17 rubrics</span> <span style="font-size:.6rem;color:var(--text4)">no trajectory</span></button><button class="run-btn " data-run-idx="3">Run #4 <span class="badge" style="background:#cf222e">FAILED</span> <span style="font-size:.6rem;color:var(--text3)">15/17 rubrics</span> <span style="font-size:.6rem;color:var(--text4)">no trajectory</span></button><button class="run-btn " data-run-idx="4">Run #5 <span class="badge" style="background:#cf222e">FAILED</span> <span style="font-size:.6rem;color:var(--text3)">14/17 rubrics</span> <span style="font-size:.6rem;color:var(--text4)">no trajectory</span></button><button class="run-btn " data-run-idx="5">Run #6 <span class="badge" style="background:#cf222e">FAILED</span> <span style="font-size:.6rem;color:var(--text3)">16/17 rubrics</span> <span style="font-size:.6rem;color:var(--text4)">no trajectory</span></button></div>
+  <div class="chat-area">
+    <div class="oracle-tab" id="oracle-tab">&#128269; Oracle Events</div>
+    <div class="oracle-panel" id="oracle-panel">
+      <div class="op-header">
+        <span class="op-title">Oracle Events</span>
+        <button class="op-close" id="op-close">&#10005;</button>
+      </div>
+      <div class="op-list"><div class="op-event">- Search for emails related to Mosaic Robotics, Tamara Byrd, or Emeka Diallo to find the client communications and understand why Tamara reached out.</div><div class="op-event">- Search CRM for the Mosaic Robotics company record and related deals to understand the account scope and history.</div><div class="op-event">- Search Airtable for Mosaic relocation records to find all April moves and their statuses.</div><div class="op-event">- Search Linear for Mosaic-related issues or tickets to find any open operational or compliance items.</div><div class="op-event">- Search QuickBooks for Mosaic-related invoices, bills, or accruals to identify financial exposure and open items.</div><div class="op-event">- Search Slack for Mosaic-related messages to find internal discussions about issues on the account.</div><div class="op-event">- Search for Heartland Movers in QuickBooks or email to find the Q1 billing dispute ($4,800 overbilling on a $12,800 invoice).</div><div class="op-event">- List Mosaic relocation records from the Airtable Relocations table (7 records exist) and notice that the Mosaic Client Accounts record shows &quot;Total Relocations: 3&quot; and Status: &quot;Onboarding,&quot; which is outdated.</div><div class="op-event">- Look up David&#x27;s email address using a contacts or CRM search tool.</div><div class="op-event">- Send an email (via send_email) to david.chen@moveops.com summarizing all findings across the Mosaic account.</div></div>
+    </div>
+    <div class="chat-container" id="chat-container">
+      <div class="chat-inner" id="chat"></div>
+    </div>
+    <div class="rubric-tab" id="rubric-tab">&#128203; Rubrics</div>
+    <div class="rubric-panel" id="rubric-panel">
+      <div class="rp-header">
+        <span class="rp-title">Rubric Results</span>
+        <span class="rp-score" id="rp-score"></span>
+        <button class="rp-close" id="rp-close">&#10005;</button>
+      </div>
+      <div class="rp-list" id="rp-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Rubric page ═══ -->
+<div class="page" id="page-rubric">
+  <div class="overview-content">
+    <div class="legend">
+      <span><span class="g">&#10003;</span> Pass</span>
+      <span><span class="r">&#10007;</span> Fail</span>
+      <span>Click any row to expand justifications</span>
+    </div>
+    <table>
+      <thead><tr>
+        <th style="width:40px;text-align:center">#</th>
+        <th>Criterion</th>
+        <th class="model-header">Run #1</th><th class="model-header">Run #2</th><th class="model-header">Run #3</th><th class="model-header">Run #4</th><th class="model-header">Run #5</th><th class="model-header">Run #6</th>
+        <th class="model-header">Pass&nbsp;Rate</th>
+      </tr></thead>
+      <tbody>
+        <tr class="crit-row" data-idx="0" onclick="toggleJust(0)">
+  <td class="label">1</td>
+  <td class="title"><span class="crit-text">The model must use an email search tool (e.g., search_emails, list_emails, or get_email_threads) to search for Mosaic-related emails.</span>
+    <div class="crit-meta"><span class="cat">tool selection</span></div>
+  </td>
+  <td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td>
+  <td class="pass" style="font-size:.78rem">100%</td>
+</tr>
+<tr class="justification-row" id="just-0" style="display:none"><td colspan="9" class="j-cell"><div class="j-panel"><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #1</span><span class="j-text">The agent made multiple search_emails calls with Mosaic-related queries including &#x27;Mosaic&#x27;, &#x27;Tamara Byrd&#x27;, &#x27;damage claim Mosaic prototype&#x27;, &#x27;Blessing Okafor&#x27;, &#x27;Keiko Tanaka&#x27;, &#x27;Deshawn Hartley&#x27;, &#x27;surcharge approval Tamara&#x27;, and others.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #2</span><span class="j-text">The agent used `mcp__mcp_c4dd483f__search_emails` multiple times (at least 15 calls) with Mosaic-related queries including &#x27;Mosaic&#x27;, &#x27;Tamara Byrd&#x27;, &#x27;Keiko Tanaka&#x27;, &#x27;Zara Okoye&#x27;, &#x27;INV-2026-0411&#x27;, etc.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #3</span><span class="j-text">The agent called `mcp__mcp_2c2a142b__search_emails` multiple times with Mosaic-related queries including &#x27;Mosaic&#x27;, &#x27;Tamara Byrd&#x27;, &#x27;Emeka Mosaic April&#x27;, &#x27;damage prototype Mosaic&#x27;, &#x27;Blessing Okafor Mosaic&#x27;, and others. These calls returned Mosaic-relevant email results.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #4</span><span class="j-text">The agent made 12 email search tool calls (mcp__mcp_f639d6bd__search_emails) with Mosaic-related queries including &#x27;Mosaic&#x27;, &#x27;Tamara Byrd&#x27;, &#x27;Emeka&#x27;, &#x27;damage claim prototype&#x27;, &#x27;STIP-2026-0094&#x27;, &#x27;Andre Washington stipend&#x27;, &#x27;incident report Heartland&#x27;, &#x27;Deshawn Hartley&#x27;, &#x27;Keiko Tanaka&#x27;, &#x27;surcharge approval Tamara&#x27;, &#x27;incident report April 17&#x27;, &#x27;Emeka Diallo Mosaic acknowledge&#x27;, and &#x27;Chloe Vance incident&#x27;.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #5</span><span class="j-text">The agent made 15 calls to search_emails with Mosaic-related queries including &#x27;Mosaic&#x27;, &#x27;Tamara Byrd&#x27;, &#x27;Emeka&#x27;, &#x27;Deshawn Hartley&#x27;, &#x27;Keiko Tanaka&#x27;, &#x27;Andre Washington relocation&#x27;, and others. Email search was thoroughly used.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #6</span><span class="j-text">The agent called mcp__mcp_5004e799__search_emails 11 times with Mosaic-related queries (e.g., &#x27;Mosaic&#x27;, &#x27;Tamara Byrd&#x27;, &#x27;Emeka&#x27;, &#x27;Heartland damage&#x27;, &#x27;incident report Tamara&#x27;, etc.), fully satisfying this criterion.</span></div></div></td></tr>
+<tr class="crit-row" data-idx="1" onclick="toggleJust(1)">
+  <td class="label">2</td>
+  <td class="title"><span class="crit-text">The model must use a Linear tool (e.g., linear_list_issues, linear_get_issue, or linear_list_projects) to search for Mosaic-related tickets.</span>
+    <div class="crit-meta"><span class="cat">tool selection</span></div>
+  </td>
+  <td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td>
+  <td class="pass" style="font-size:.78rem">100%</td>
+</tr>
+<tr class="justification-row" id="just-1" style="display:none"><td colspan="9" class="j-cell"><div class="j-panel"><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #1</span><span class="j-text">The agent made multiple linear_list_issues calls with Mosaic-related queries including &#x27;Mosaic&#x27;, &#x27;damage claim&#x27;, &#x27;stipend fraud&#x27;, &#x27;Okoye&#x27;, &#x27;Hartley&#x27;, and &#x27;Washington&#x27;.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #2</span><span class="j-text">The agent used `mcp__mcp_c4dd483f__linear_list_issues` 4 times with Mosaic-related queries: &#x27;Mosaic&#x27; (found DOT docs ticket), &#x27;STIP&#x27; and &#x27;stipend duplicate&#x27; (found ENG-220), and &#x27;Heartland&#x27; (found issue_heartland_q1_recon).</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #3</span><span class="j-text">The agent called `mcp__mcp_2c2a142b__linear_list_issues` multiple times with Mosaic-related queries including &#x27;Mosaic&#x27;, &#x27;Andre Washington&#x27;, &#x27;stipend&#x27;, &#x27;damage incident&#x27;, and &#x27;incident report Okoye&#x27;. Results included DOT compliance audit tickets and engineering tickets.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #4</span><span class="j-text">The agent made 4 linear_list_issues calls with queries including &#x27;Mosaic&#x27; (which returned the DOT compliance ticket), &#x27;stipend&#x27; (which returned ENG-220 about duplicate receipt detection), &#x27;Blessing Okafor&#x27;, and &#x27;damage&#x27;.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #5</span><span class="j-text">The agent made 5 calls to linear_list_issues with queries including &#x27;Mosaic&#x27;, &#x27;stipend&#x27;, &#x27;damage claim&#x27;, &#x27;Deshawn Hartley&#x27;, and &#x27;Andre Washington&#x27;. This found the DOT docs issue (issue_dot_docs_tanaka_mosaic), the stipend duplicate detection issue, and the Washington movers coordination issue.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #6</span><span class="j-text">The agent called mcp__mcp_5004e799__linear_list_issues 5 times with Mosaic-related queries (e.g., query: &#x27;Mosaic&#x27;, &#x27;DOT compliance&#x27;, &#x27;Heartland&#x27;, &#x27;stipend&#x27;), fully satisfying this criterion.</span></div></div></td></tr>
+<tr class="crit-row" data-idx="2" onclick="toggleJust(2)">
+  <td class="label">3</td>
+  <td class="title"><span class="crit-text">The model must use a QuickBooks tool (e.g., quickbooks_search_invoices, quickbooks_search_bills, or quickbooks_search_accounts) to search for Mosaic-related financial records.</span>
+    <div class="crit-meta"><span class="cat">tool selection</span></div>
+  </td>
+  <td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td>
+  <td class="pass" style="font-size:.78rem">100%</td>
+</tr>
+<tr class="justification-row" id="just-2" style="display:none"><td colspan="9" class="j-cell"><div class="j-panel"><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #1</span><span class="j-text">The agent called quickbooks_search_customers with criteria filtering for Mosaic, and quickbooks_search_invoices with Mosaic-related criteria, including a specific invoice lookup (INV-2026-0411).</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #2</span><span class="j-text">The agent used `mcp__mcp_c4dd483f__quickbooks_search_customers` with a Mosaic-related criteria and `mcp__mcp_c4dd483f__quickbooks_search_invoices` with CustomerRef &#x27;Mosaic&#x27;. Both are QuickBooks financial search tools.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #3</span><span class="j-text">The agent called `mcp__mcp_2c2a142b__quickbooks_search_invoices` and `mcp__mcp_2c2a142b__quickbooks_search_customers` multiple times with Mosaic-related criteria, retrieving financial records including invoices.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #4</span><span class="j-text">The agent made multiple QuickBooks tool calls: quickbooks_search_invoices with CustomerRef &#x27;Mosaic&#x27; and CustomerRef.value &#x27;cust_mosaic&#x27;, and quickbooks_search_customers calls. Financial data was retrieved including invoices and customer records.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #5</span><span class="j-text">The agent called quickbooks_search_customers (querying for Mosaic) and quickbooks_search_invoices (querying for INV-2026-0411), successfully retrieving a Mosaic Robotics invoice for $9,010.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #6</span><span class="j-text">The agent called quickbooks_search_invoices (twice), quickbooks_search_bills (once), and quickbooks_search_customers (three times) with Mosaic-related criteria, satisfying this criterion.</span></div></div></td></tr>
+<tr class="crit-row" data-idx="3" onclick="toggleJust(3)">
+  <td class="label">4</td>
+  <td class="title"><span class="crit-text">The model must use the send_email tool to send a summary to David Chen.</span>
+    <div class="crit-meta"><span class="cat">tool selection</span></div>
+  </td>
+  <td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td>
+  <td class="pass" style="font-size:.78rem">100%</td>
+</tr>
+<tr class="justification-row" id="just-3" style="display:none"><td colspan="9" class="j-cell"><div class="j-panel"><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #1</span><span class="j-text">The agent used the send_email tool to send a comprehensive summary to David Chen at david.chen@moveops.com (CC: emeka.diallo@moveops.com) with the subject &#x27;Mosaic Robotics — Full Account Situation Report (April Relocations)&#x27;.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #2</span><span class="j-text">The agent used `mcp__mcp_c4dd483f__send_email` (call #41) with a comprehensive summary of findings. The tool returned success with email_id: d5ff1a54da4b42bdbf15a6ecb4b248ed.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #3</span><span class="j-text">The agent called `mcp__mcp_2c2a142b__send_email` at item 82 with a comprehensive summary email to David Chen. The tool returned a success response with an email ID.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #4</span><span class="j-text">The agent used the send_email tool (Call [86]) and it returned success with email ID d430310de9614c0eb0252ffb9c5686d6. The email was sent to david.chen@moveops.com with a comprehensive Mosaic situation report.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #5</span><span class="j-text">The agent made a send_email call to david.chen@moveops.com with subject &#x27;Mosaic Robotics — April Moves: Full Situation Report &amp; Open Risk Items&#x27;. The tool returned success with email_id: 57731c3fc8e54c49bd47a289ff10e521.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #6</span><span class="j-text">The agent called mcp__mcp_5004e799__send_email at index [100] with a detailed Mosaic Robotics summary addressed to David Chen.</span></div></div></td></tr>
+<tr class="crit-row" data-idx="4" onclick="toggleJust(4)">
+  <td class="label">5</td>
+  <td class="title"><span class="crit-text">The model must pass &quot;[david.chen@moveops.com](mailto:david.chen@moveops.com)&quot; to the \`recipients\` parameter when calling send_email.</span>
+    <div class="crit-meta"><span class="cat">query construction</span></div>
+  </td>
+  <td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td>
+  <td class="pass" style="font-size:.78rem">100%</td>
+</tr>
+<tr class="justification-row" id="just-4" style="display:none"><td colspan="9" class="j-cell"><div class="j-panel"><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #1</span><span class="j-text">The send_email tool call explicitly used &#x27;david.chen@moveops.com&#x27; as the recipients parameter.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #2</span><span class="j-text">The send_email tool call had recipients: [&#x27;david.chen@moveops.com&#x27;], which matches the required email address.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #3</span><span class="j-text">The send_email call at item 82 explicitly included &#x27;david.chen@moveops.com&#x27; in the &#x27;recipients&#x27; parameter array.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #4</span><span class="j-text">The send_email tool call at Call [86] included recipients: [&#x27;david.chen@moveops.com&#x27;], which is the correct email address for David Chen.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #5</span><span class="j-text">The send_email call explicitly used &#x27;david.chen@moveops.com&#x27; as the recipients parameter, confirmed in the trajectory.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #6</span><span class="j-text">The send_email recipients parameter was set to [&#x27;david.chen@moveops.com&#x27;], exactly matching the required address.</span></div></div></td></tr>
+<tr class="crit-row" data-idx="5" onclick="toggleJust(5)">
+  <td class="label">6</td>
+  <td class="title"><span class="crit-text">The email body (in the send_email content parameter) identifies that a robotic arm prototype valued at approximately $90,000 was damaged during a Mosaic relocation from Savannah to Atlanta.</span>
+    <div class="crit-meta"><span class="cat">outcome</span></div>
+  </td>
+  <td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td>
+  <td class="pass" style="font-size:.78rem">100%</td>
+</tr>
+<tr class="justification-row" id="just-5" style="display:none"><td colspan="9" class="j-cell"><div class="j-panel"><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #1</span><span class="j-text">The email body explicitly mentions: &#x27;Zara Okoye (Savannah, GA → Atlanta, GA, COMPLETED WITH MAJOR INCIDENT): $90K prototype (robotic arm Unit #1) arrived damaged — cracked servo motor housing, 4+ degree calibration drift.&#x27;</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #2</span><span class="j-text">The email body explicitly states: &#x27;Zara Okoye&#x27;s relocation from Savannah to Atlanta resulted in a damaged robotic arm prototype (Unit #1, valued at $90K).&#x27; All required elements (robotic arm, $90K, Savannah-to-Atlanta) are present.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #3</span><span class="j-text">The email content explicitly states: &#x27;a $90,000 robotic arm prototype was delivered damaged during Zara Okoye&#x27;s relocation&#x27; and the move is identified as &#x27;Savannah → Atlanta&#x27;. All three elements (robotic arm prototype, approximately $90K value, Savannah-to-Atlanta move) are present.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #4</span><span class="j-text">The email body explicitly states: &#x27;Relocation: Zara Okoye, Savannah → Atlanta, April 14–15&#x27; and &#x27;A $90,000 robotic arm prototype arrived with a cracked servo motor housing and 4+ degree calibration drift.&#x27; All required elements are present.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #5</span><span class="j-text">The email to David Chen explicitly covers Issue 1: a cracked servo motor ($90K damage) for Zara Okoye&#x27;s move from Savannah, GA to Atlanta, GA, transported by Heartland Movers. The $90K robotic arm prototype damage is clearly identified.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #6</span><span class="j-text">The email body explicitly identifies Zara Okoye&#x27;s robotic arm prototype (valued at $90K each) damaged during a Savannah-to-Atlanta relocation on April 15, including the cracked servo motor housing and calibration drift.</span></div></div></td></tr>
+<tr class="crit-row" data-idx="6" onclick="toggleJust(6)">
+  <td class="label">7</td>
+  <td class="title"><span class="crit-text">The email body (in the send_email content parameter) states that MoveOps&#x27; vendor liability coverage caps at approximately $50,000 per item, leaving approximately $40,000 uncovered.</span>
+    <div class="crit-meta"><span class="cat">outcome</span></div>
+  </td>
+  <td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td>
+  <td class="pass" style="font-size:.78rem">100%</td>
+</tr>
+<tr class="justification-row" id="just-6" style="display:none"><td colspan="9" class="j-cell"><div class="j-panel"><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #1</span><span class="j-text">The email body explicitly states: &#x27;MoveOps vendor liability coverage: $50K per item; uncovered gap: $40K.&#x27; This clearly identifies both the $50K coverage cap and the $40K gap.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #2</span><span class="j-text">The email body explicitly states: &#x27;Our vendor liability insurance caps at $50K/item, leaving a $40K gap.&#x27; Both the $50K cap and $40K gap are clearly stated.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #3</span><span class="j-text">The email content explicitly states: &#x27;Our vendor liability caps at $50K/item. The prototype is valued at $90K. That&#x27;s a $40K uncovered gap that MoveOps may absorb if Heartland disputes liability.&#x27; Both the $50K cap and $40K gap are clearly identified.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #4</span><span class="j-text">The email explicitly states: &#x27;Financial exposure: $40K uncovered gap (coverage caps at $50K/item).&#x27; Both the $50K coverage cap and the $40K gap are clearly identified.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #5</span><span class="j-text">The email content explicitly states &#x27;MoveOps liability caps at $50K per item; damage is $90K&#x27; with a $40K gap. This matches the criterion&#x27;s requirement to identify the approximately $50K coverage cap and $40K uncovered amount.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #6</span><span class="j-text">The email body explicitly states that MoveOps vendor liability coverage caps at $50K per item, leaving a $40K uncovered gap on the $90K prototype damage claim.</span></div></div></td></tr>
+<tr class="crit-row" data-idx="7" onclick="toggleJust(7)">
+  <td class="label">8</td>
+  <td class="title"><span class="crit-text">The email body (in the send_email content parameter) identifies that the signed DOT hazmat placarding certificate for a Mosaic laser cutter shipment from Columbus to Seattle is missing.</span>
+    <div class="crit-meta"><span class="cat">outcome</span></div>
+  </td>
+  <td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td>
+  <td class="pass" style="font-size:.78rem">100%</td>
+</tr>
+<tr class="justification-row" id="just-7" style="display:none"><td colspan="9" class="j-cell"><div class="j-panel"><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #1</span><span class="j-text">The email body explicitly states: &#x27;Keiko Tanaka (Columbus, OH → Seattle, WA, IN PROGRESS — COMPLIANCE ISSUE): Missing DOT 49 CFR hazmat placarding certificate for a Class 3B laser cutter.&#x27; All required details are present.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #2</span><span class="j-text">The email body explicitly states: &#x27;The Keiko Tanaka relocation (Columbus to Seattle) involved a Class 3B CO2 laser cutter requiring DOT hazmat placarding under 49 CFR. The signed placarding certificate was NEVER obtained by MoveOps.&#x27; All required elements are present.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #3</span><span class="j-text">The email content explicitly states: &#x27;the signed hazmat placarding certificate for Keiko Tanaka&#x27;s laser cutter move (Class 3B CO2 laser, $35K value) is MISSING&#x27; and the move is identified as &#x27;Columbus OH → Seattle&#x27;. All required elements are present.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #4</span><span class="j-text">The email states: &#x27;Relocation: Keiko Tanaka, Columbus → Seattle, April 15–23. Vendor: Swift Relocations... Signed DOT hazmat placarding certificate for the laser cutter shipment was never obtained. Under 49 CFR 107.329, penalties up to $59,017/day.&#x27; All required elements are present.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #5</span><span class="j-text">The email to David identifies the DOT compliance issue for Keiko Tanaka&#x27;s move (Columbus, OH → Seattle, WA) involving a Class 3B CO2 laser (Epilog Fusion Pro 48), with the signed DOT placarding certificate explicitly noted as MISSING from records.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #6</span><span class="j-text">The email body identifies that Keiko Tanaka&#x27;s Columbus-to-Seattle laser cutter shipment is missing the required signed DOT placarding certificate, noting Chloe Vance confirmed it was not found in the shared drive, Airtable, or email.</span></div></div></td></tr>
+<tr class="crit-row" data-idx="8" onclick="toggleJust(8)">
+  <td class="label">9</td>
+  <td class="title"><span class="crit-text">The email body (in the send_email content parameter) identifies that coordinator Blessing Okafor signed off on Heartland Movers&#x27; packing remotely without physically verifying the anti-vibration foam or crating specifications.</span>
+    <div class="crit-meta"><span class="cat">outcome</span></div>
+  </td>
+  <td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td>
+  <td class="pass" style="font-size:.78rem">100%</td>
+</tr>
+<tr class="justification-row" id="just-8" style="display:none"><td colspan="9" class="j-cell"><div class="j-panel"><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #1</span><span class="j-text">The email body explicitly states under Issue #1 root causes: &#x27;remote packing sign-off by Blessing Okafor&#x27; — directly identifying the remote sign-off without physical verification as a root cause.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #2</span><span class="j-text">The email body explicitly states: &#x27;Coordinator Blessing Okafor signed off on Heartland&#x27;s packing checklist REMOTELY — she was in Philadelphia handling a concurrent Canopy Health move. The 4-inch foam density crating spec was never physically verified.&#x27; All required elements are present.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #3</span><span class="j-text">The email content explicitly states: &#x27;Coordinator Blessing Okafor signed off on Heartland Movers&#x27; packing checklist REMOTELY from Philadelphia — she never physically verified the anti-vibration foam met the 4-inch minimum spec in the work order.&#x27; Both the remote sign-off and the reference to foam/crating spec are clearly identified.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #4</span><span class="j-text">The email explicitly states: &#x27;Blessing Okafor signed off on Heartland&#x27;s packing checklist remotely while physically in Philadelphia coordinating a Canopy Health move — she never visually verified the 4-inch anti-vibration foam spec.&#x27; Both the remote sign-off and the failure to verify foam/crating specifications are mentioned.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #5</span><span class="j-text">The email content explicitly states &#x27;Blessing Okafor signed off remotely without physical verification&#x27; in the context of the prototype damage incident, addressing the root cause of the crating/foam spec failures.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #6</span><span class="j-text">The email body explicitly identifies Blessing Okafor as signing off on Heartland Movers&#x27; packing checklist remotely from Philadelphia without physically verifying the 4-inch anti-vibration foam specification or crating spec.</span></div></div></td></tr>
+<tr class="crit-row" data-idx="9" onclick="toggleJust(9)">
+  <td class="label">10</td>
+  <td class="title"><span class="crit-text">The email body (in the send_email content parameter) identifies that the Mosaic Robotics Client Accounts record in Airtable is outdated, and that it shows approximately 3 relocations when the Relocations table contains 7 Mosaic records, or that the client status still shows &quot;Onboarding&quot; despite being an active billing client.</span>
+    <div class="crit-meta"><span class="cat">outcome</span></div>
+  </td>
+  <td class="fail">&#10007;</td><td class="fail">&#10007;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="fail">&#10007;</td><td class="fail">&#10007;</td>
+  <td class="fail" style="font-size:.78rem">33%</td>
+</tr>
+<tr class="justification-row" id="just-9" style="display:none"><td colspan="9" class="j-cell"><div class="j-panel"><div class="j-entry"><span class="j-icon j-fail">&#10007;</span><span class="j-model">Run #1</span><span class="j-text">While the agent did search Airtable (Client Accounts, Relocations, Stipend Transactions tables), the email body does not mention the Airtable discrepancy between the Client Accounts table showing ~3 relocations vs. 7 records in the Relocations table, nor does it mention an outdated &#x27;Onboarding&#x27; status.</span></div><div class="j-entry"><span class="j-icon j-fail">&#10007;</span><span class="j-model">Run #2</span><span class="j-text">No Airtable tool calls were made anywhere in the agent&#x27;s trajectory (42 total tool calls, none to Airtable). The word &#x27;Airtable&#x27; does not appear in the email body. The discrepancy between &#x27;3 relocations&#x27; in Client Accounts vs. &#x27;7 records&#x27; in Relocations table, or the outdated &#x27;Onboarding&#x27; status, was never identified.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #3</span><span class="j-text">The email content states: &#x27;The Mosaic Client Accounts record in Airtable still shows &quot;Total Relocations: 3&quot; and Status: &quot;Onboarding.&quot; In reality, there are 7 relocations.&#x27; Both the outdated relocation count (3 vs. 7) and the stale &#x27;Onboarding&#x27; status are explicitly called out.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #4</span><span class="j-text">The email&#x27;s ISSUE 7 — DATA HYGIENE GAPS section explicitly states: &#x27;Airtable shows Total Relocations: 3 (actual: 7), client status still Onboarding.&#x27; Both the discrepancy in relocation counts and the outdated Onboarding status are identified.</span></div><div class="j-entry"><span class="j-icon j-fail">&#10007;</span><span class="j-model">Run #5</span><span class="j-text">The agent searched Airtable (airtable_search_records on Relocations and Stipend Transactions tables) but both searches returned &#x27;No records found&#x27;. The agent did not discover or report the discrepancy between the Client Accounts record showing ~3 relocations vs. 7 actual Mosaic records, nor the outdated &#x27;Onboarding&#x27; status. No mention of this data integrity issue appears in the email to David.</span></div><div class="j-entry"><span class="j-icon j-fail">&#10007;</span><span class="j-model">Run #6</span><span class="j-text">The email body does not mention an Airtable data discrepancy (3 relocations in Client Accounts vs. 7 in the Relocations table) or an outdated &#x27;Onboarding&#x27; status. All three Airtable searches (Relocations, Stipend Transactions, Client Accounts) returned empty results. Airtable is only mentioned in the email as a system that was audited and as a location where the DOT certificate was not found — no data integrity gap between tables is identified.</span></div></div></td></tr>
+<tr class="crit-row" data-idx="10" onclick="toggleJust(10)">
+  <td class="label">11</td>
+  <td class="title"><span class="crit-text">The email body (in the send_email content parameter) connects Blessing Okafor to both the prototype damage incident and the DOT compliance gap, and identify coordinator overload as an issue.</span>
+    <div class="crit-meta"><span class="cat">outcome</span></div>
+  </td>
+  <td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="fail">&#10007;</td><td class="fail">&#10007;</td><td class="pass">&#10003;</td>
+  <td class="na" style="font-size:.78rem">67%</td>
+</tr>
+<tr class="justification-row" id="just-10" style="display:none"><td colspan="9" class="j-cell"><div class="j-panel"><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #1</span><span class="j-text">The email body explicitly states in the SYSTEMIC CONCERN section: &#x27;Blessing Okafor is a contributing factor in both the Okoye damage claim and the Tanaka DOT gap — coordinator overload.&#x27; This directly connects her to both issues and identifies overload as the systemic problem.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #2</span><span class="j-text">The email body connects Blessing Okafor to both issues: for the prototype damage (&#x27;Coordinator Blessing Okafor signed off on Heartland&#x27;s packing checklist REMOTELY&#x27;) and for the DOT gap (&#x27;Blessing Okafor got verbal confirmation from the Swift driver but didn&#x27;t follow up — she was overloaded handling the Okoye and Okonkwo moves simultaneously&#x27;). The email explicitly identifies &#x27;coordinator overload&#x27; multiple times, including in the &#x27;Things That Could Blow Up&#x27; section.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #3</span><span class="j-text">The email connects Blessing Okafor to both issues: for the prototype damage she &#x27;signed off REMOTELY...She was simultaneously coordinating a Canopy Health move,&#x27; and for the DOT cert she &#x27;received verbal confirmation...but never obtained the signed certificate. She was juggling the Okoye and Okonkwo moves the same week.&#x27; The email concludes: &#x27;Blessing was stretched across three concurrent moves and that&#x27;s where most of the process failures originated.&#x27;</span></div><div class="j-entry"><span class="j-icon j-fail">&#10007;</span><span class="j-model">Run #4</span><span class="j-text">The email attributes the DOT compliance gap to &#x27;Coordinator: Javier Morales&#x27;, not Blessing Okafor. Blessing Okafor is only connected to the prototype damage incident. The email does not link Blessing Okafor to both issues, nor does it mention coordinator overload as a systemic concern.</span></div><div class="j-entry"><span class="j-icon j-fail">&#10007;</span><span class="j-model">Run #5</span><span class="j-text">The email mentions Blessing Okafor only in connection with Issue 1 (the prototype damage/remote sign-off). Issue 2 (DOT compliance for Keiko Tanaka) mentions Greg Pallone and Chloe Vance but not Blessing Okafor. The email does not connect Blessing Okafor to both failures as a pattern, and does not mention coordinator overload as a systemic concern. The only overload mentioned is Emeka being overwhelmed.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #6</span><span class="j-text">The email body explicitly names Blessing Okafor in connection with both Issue #1 (remote sign-off on packing without physical verification) and Issue #2 (verbal-only confirmation on DOT placarding), and notes she was simultaneously handling multiple concurrent moves (Canopy Health, Okoye, and Okonkwo), flagging coordinator overload as a systemic concern.</span></div></div></td></tr>
+<tr class="crit-row" data-idx="11" onclick="toggleJust(11)">
+  <td class="label">12</td>
+  <td class="title"><span class="crit-text">The email body (in the send_email content parameter) mentions a Mosaic relocation with a hard delivery deadline of April 19, connected to the Automate 2026 trade show.</span>
+    <div class="crit-meta"><span class="cat">outcome</span></div>
+  </td>
+  <td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td>
+  <td class="pass" style="font-size:.78rem">100%</td>
+</tr>
+<tr class="justification-row" id="just-11" style="display:none"><td colspan="9" class="j-cell"><div class="j-panel"><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #1</span><span class="j-text">The email body explicitly mentions: &#x27;Deshawn Hartley (Tampa, FL → Denver, CO, IN PROGRESS — HARD DEADLINE): Must deliver by April 19 for Automate 2026 trade show (April 21–24).&#x27; Both the April 19 deadline and Automate 2026 are present.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #2</span><span class="j-text">The email body explicitly states: &#x27;Deshawn Hartley&#x27;s Tampa-to-Denver move had a firm April 19 deadline (lead presenter at Automate 2026, booth setup starts April 20).&#x27; Both the April 19 deadline and Automate 2026 trade show are present.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #3</span><span class="j-text">The email explicitly mentions &#x27;DESHAWN HARTLEY HARD DEADLINE (Tampa → Denver, must deliver by April 19)&#x27; and states he is &#x27;the lead presenter at Mosaic&#x27;s Automate 2026 booth (April 21–24). Booth setup starts April 20. There is ZERO flexibility on the April 19 delivery deadline.&#x27; All elements (April 19, Automate 2026, delivery deadline) are present.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #4</span><span class="j-text">The email&#x27;s ISSUE 6 states: &#x27;Tampa → Denver, hard delivery deadline April 19. Deshawn is lead presenter at Mosaic&#x27;s Automate 2026 booth (April 21–24, Denver Convention Center). Airtable still shows In Progress, no delivery confirmation found.&#x27; All required elements are present.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #5</span><span class="j-text">The email to David explicitly identifies Issue 5 as &#x27;Deshawn Hartley Deadline&#x27; with an &#x27;April 19 (hard, non-negotiable)&#x27; delivery deadline connected to &#x27;Automate 2026, booth setup April 20&#x27;. Both the April 19 deadline and the Automate 2026 trade show connection are present.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #6</span><span class="j-text">The email body explicitly mentions Deshawn Hartley&#x27;s non-negotiable April 19 delivery deadline and identifies him as the lead presenter at the Automate 2026 trade show (April 21-24, Denver Convention Center).</span></div></div></td></tr>
+<tr class="crit-row" data-idx="12" onclick="toggleJust(12)">
+  <td class="label">13</td>
+  <td class="title"><span class="crit-text">An email was sent (via send_email) to [david.chen@moveops.com](mailto:david.chen@moveops.com), containing a summary of findings related to Mosaic Robotics April relocations, and the tool returned success.</span>
+    <div class="crit-meta"><span class="cat">outcome</span></div>
+  </td>
+  <td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td>
+  <td class="pass" style="font-size:.78rem">100%</td>
+</tr>
+<tr class="justification-row" id="just-12" style="display:none"><td colspan="9" class="j-cell"><div class="j-panel"><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #1</span><span class="j-text">The send_email tool was called with david.chen@moveops.com as recipient, containing a comprehensive Mosaic Robotics situation report, and the trajectory confirms all 59 tool calls returned SUCCESS.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #2</span><span class="j-text">The send_email tool was called with david.chen@moveops.com as recipient and a comprehensive Mosaic summary as the body. The tool returned successfully with email_id: d5ff1a54da4b42bdbf15a6ecb4b248ed.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #3</span><span class="j-text">The send_email tool was called with david.chen@moveops.com as the recipient and contained a comprehensive Mosaic Robotics summary. The tool returned a success response: &#x27;{&quot;email_id&quot;: &quot;812f423eced645838bf9492818236bf2&quot;}&#x27; confirming successful delivery.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #4</span><span class="j-text">The send_email tool was called with recipient david.chen@moveops.com, with a comprehensive summary of Mosaic Robotics April relocation findings. The tool returned success with email ID d430310de9614c0eb0252ffb9c5686d6.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #5</span><span class="j-text">The send_email tool was called with david.chen@moveops.com as recipient and a comprehensive Mosaic summary as content. The tool returned success with email_id: 57731c3fc8e54c49bd47a289ff10e521.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #6</span><span class="j-text">The send_email tool was called with recipients [&#x27;david.chen@moveops.com&#x27;] and a comprehensive Mosaic Robotics summary, and the tool returned success with email_id &#x27;eee797c94d32431aa761f876384de09f&#x27;.</span></div></div></td></tr>
+<tr class="crit-row" data-idx="13" onclick="toggleJust(13)">
+  <td class="label">14</td>
+  <td class="title"><span class="crit-text">The email body (in the send_email content parameter) identifies that Heartland Movers has a separate Q1 billing dispute involving approximately $4,800 in overbilling (or describes Heartland billing for moves they did not complete), independent of the prototype damage.</span>
+    <div class="crit-meta"><span class="cat">outcome</span></div>
+  </td>
+  <td class="fail">&#10007;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="fail">&#10007;</td><td class="fail">&#10007;</td><td class="pass">&#10003;</td>
+  <td class="na" style="font-size:.78rem">50%</td>
+</tr>
+<tr class="justification-row" id="just-13" style="display:none"><td colspan="9" class="j-cell"><div class="j-panel"><div class="j-entry"><span class="j-icon j-fail">&#10007;</span><span class="j-model">Run #1</span><span class="j-text">The email body does not mention any separate Heartland Movers Q1 billing dispute involving approximately $4,800 in overbilling or billing for moves they did not complete. Heartland is mentioned only in the context of the $90K prototype damage claim and outstanding temperature logs.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #2</span><span class="j-text">The email body explicitly states: &#x27;Heartland overbilled $4,800 on their Q1 invoice (3 of 8 billed moves were cancelled or handled by Swift). Payment hold on the full $12,800 invoice.&#x27; The $4,800 Heartland overbilling is clearly identified as separate from the prototype damage.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #3</span><span class="j-text">The email content explicitly states: &#x27;Heartland has an open Q1 billing dispute: they submitted a $12,800 invoice for 8 moves, but Chloe&#x27;s audit found only 5 were legitimate ($4,800 overbilling). Includes billing for cancelled moves and a move they never performed.&#x27; The $4,800 overbilling dispute is clearly identified independently of the prototype damage.</span></div><div class="j-entry"><span class="j-icon j-fail">&#10007;</span><span class="j-model">Run #4</span><span class="j-text">The email does not mention a separate Heartland Movers Q1 billing dispute involving approximately $4,800 in overbilling or billing for moves they did not complete. Heartland is mentioned only in connection with the $90K prototype damage claim.</span></div><div class="j-entry"><span class="j-icon j-fail">&#10007;</span><span class="j-model">Run #5</span><span class="j-text">No mention of a $4,800 Heartland Movers billing dispute appears anywhere in the trajectory or in the email content sent to David. Heartland is only discussed in the context of the $90K prototype damage incident. The overbilling dispute was not discovered or reported.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #6</span><span class="j-text">The email body explicitly identifies a separate $4,800 Q1 overbilling dispute with Heartland Movers (bill HM-2026-Q1-0042, $12,800 total), noting they billed for 3 moves they didn&#x27;t complete, with Linear ticket OPS-342 tracking the dispute.</span></div></div></td></tr>
+<tr class="crit-row" data-idx="14" onclick="toggleJust(14)">
+  <td class="label">15</td>
+  <td class="title"><span class="crit-text">Tool responses in the trajectory contain relocation records or data from at least 3 different services (e.g., Airtable, QuickBooks, Linear, Email, Slack, CRM) related to Mosaic Robotics.</span>
+    <div class="crit-meta"><span class="cat">outcome</span></div>
+  </td>
+  <td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td>
+  <td class="pass" style="font-size:.78rem">100%</td>
+</tr>
+<tr class="justification-row" id="just-14" style="display:none"><td colspan="9" class="j-cell"><div class="j-panel"><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #1</span><span class="j-text">Tool responses returned Mosaic-related data from at least 6 distinct services: Email (search_emails), Linear (linear_list_issues), QuickBooks (quickbooks_search_invoices/customers), CRM (crm_search_contacts/companies/deals), Airtable (airtable_search_records), and Conversations/Slack (conversations_search_messages).</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #2</span><span class="j-text">The agent retrieved Mosaic-related data from at least 5 distinct services: Email (search_emails found damage complaint, placarding reply, invoice emails), Slack (conversations_search_messages found Emeka&#x27;s messages about damage claim), Linear (linear_list_issues found DOT ticket and ENG-220), CRM (crm_search_companies, crm_search_contacts, crm_search_deals, contacts_search_contacts), and QuickBooks (quickbooks_search_invoices, quickbooks_search_customers).</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #3</span><span class="j-text">Tool responses returned Mosaic-related data from at least 6 distinct services: Email (search_emails), Linear (linear_list_issues), QuickBooks (quickbooks_search_invoices), Airtable (airtable_search_records for Relocations, Stipend Transactions, and Client Accounts), CRM (crm_search_companies, crm_search_contacts, crm_search_deals), and Slack/conversations (conversations_search_messages).</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #4</span><span class="j-text">The agent retrieved Mosaic-related data from at least 6 distinct services: Email (search_emails returned Tamara Byrd emails, Keiko Tanaka emails, etc.), Linear (DOT docs ticket, ENG-220), CRM (Tamara Byrd contact, Mosaic company, deals, engagements), Airtable (7 relocation records, stipend transactions, client accounts), Slack (conversations), and attempted QuickBooks (customers list). Well above the 3-service threshold.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #5</span><span class="j-text">At least 5 different services returned Mosaic-related data: Email (multiple emails about damage, DOT compliance, deadlines, finance), CRM (Mosaic Robotics company record, Tamara Byrd contact, 5 deals), Linear (3 Mosaic-related tickets), Slack (messages referencing Mosaic staffing/incident summary), and QuickBooks (invoice INV-2026-0411 for $9,010). This clearly exceeds the 3-service threshold.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #6</span><span class="j-text">Tool responses contained Mosaic-related data from at least 5 distinct services: Email (search_emails returned Mosaic emails), Linear (linear_list_issues returned DOT/Heartland/stipend tickets), QuickBooks (quickbooks_search_invoices/bills returned Mosaic financial records), CRM (crm_search_companies/contacts returned Tamara Byrd and Emeka), and Conversations/Slack (conversations_search_messages returned Mosaic-related messages).</span></div></div></td></tr>
+<tr class="crit-row" data-idx="15" onclick="toggleJust(15)">
+  <td class="label">16</td>
+  <td class="title"><span class="crit-text">The model must use a contact lookup tool (e.g., contacts_search_contacts, contacts_get_contacts, crm_search_contacts, or crm_get_contact) to look up David Chen&#x27;s email address.</span>
+    <div class="crit-meta"><span class="cat">tool selection</span></div>
+  </td>
+  <td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td>
+  <td class="pass" style="font-size:.78rem">100%</td>
+</tr>
+<tr class="justification-row" id="just-15" style="display:none"><td colspan="9" class="j-cell"><div class="j-panel"><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #1</span><span class="j-text">The agent called contacts_search_contacts with query &#x27;David&#x27; (tool call #8) to look up David Chen&#x27;s contact information before sending the email.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #2</span><span class="j-text">The agent used `mcp__mcp_c4dd483f__contacts_search_contacts` (call #14) with query &#x27;David&#x27;, which returned david.chen@moveops.com. This is a contact lookup tool used to find David Chen&#x27;s email address.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #3</span><span class="j-text">The agent called both `mcp__mcp_2c2a142b__crm_search_contacts` with `{&quot;full_name&quot;: &quot;David&quot;}` (item 8) and `mcp__mcp_2c2a142b__contacts_search_contacts` with `{&quot;query&quot;: &quot;David&quot;}` (item 16) to look up David Chen&#x27;s contact information before sending the email.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #4</span><span class="j-text">Call [18] used contacts_search_contacts with query &#x27;David&#x27;, which returned David Chen&#x27;s contact record including his email address david.chen@moveops.com. This lookup was performed before sending the email.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #5</span><span class="j-text">The agent called contacts_search_contacts with query &#x27;David&#x27;, which returned David Chen (moveops_david_chen, Customer Engagement, San Francisco) with his contact details including his email address.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #6</span><span class="j-text">The agent called mcp__mcp_5004e799__contacts_search_contacts at index [22] with query &#x27;David&#x27;, which returned the contact record for David Chen (moveops_david_chen), satisfying this criterion.</span></div></div></td></tr>
+<tr class="crit-row" data-idx="16" onclick="toggleJust(16)">
+  <td class="label">17</td>
+  <td class="title"><span class="crit-text">The model must pass a query related to &quot;David&quot; (or similar) when calling a contact lookup tool (e.g., contacts_search_contacts, crm_search_contacts).</span>
+    <div class="crit-meta"><span class="cat">query construction</span></div>
+  </td>
+  <td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td><td class="pass">&#10003;</td>
+  <td class="pass" style="font-size:.78rem">100%</td>
+</tr>
+<tr class="justification-row" id="just-16" style="display:none"><td colspan="9" class="j-cell"><div class="j-panel"><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #1</span><span class="j-text">The contacts_search_contacts tool call used the query parameter &#x27;David&#x27;, which directly matches the requirement to pass a query related to &#x27;David&#x27; or similar.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #2</span><span class="j-text">Call #14 used `contacts_search_contacts` with query parameter &#x27;David&#x27;, which matches the requirement to pass a query related to &#x27;David&#x27; when calling a contact lookup tool.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #3</span><span class="j-text">The agent passed &#x27;David&#x27; as the query when calling contact lookup tools: `crm_search_contacts` used `{&quot;full_name&quot;: &quot;David&quot;}` and `contacts_search_contacts` used `{&quot;query&quot;: &quot;David&quot;}`. Both clearly relate to finding David Chen.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #4</span><span class="j-text">Call [18] passed query &#x27;David&#x27; to the contacts_search_contacts tool, which returned David Chen&#x27;s contact details including his email address.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #5</span><span class="j-text">The contacts_search_contacts call used the query &#x27;David&#x27;, which matches the criterion&#x27;s requirement to pass a query related to &#x27;David&#x27; (or similar) when looking up David Chen&#x27;s contact information.</span></div><div class="j-entry"><span class="j-icon j-pass">&#10003;</span><span class="j-model">Run #6</span><span class="j-text">The contacts_search_contacts tool was called with the parameter {&#x27;query&#x27;: &#x27;David&#x27;} at index [22], directly satisfying the requirement to pass a query related to &#x27;David&#x27; when looking up the contact.</span></div></div></td></tr>
+
+        <tr class="score-row">
+          <td></td><td style="font-weight:700;font-size:.85rem">Total</td>
+          <td class="score-pos">15/17</td><td class="score-pos">16/17</td><td class="score-pos">17/17</td><td class="score-pos">15/17</td><td class="score-pos">14/17</td><td class="score-pos">16/17</td>
+          <td class="score-pos">91%</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Tool modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title"></span>
+      <button class="modal-close" id="modal-close">&#10005;</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+var RUN_DATA=[{"messages": [], "model": "claude-opus-4-6", "status": "passed", "v_status": "failed", "score": 15, "n_rubric_pass": 15, "n_rubric_fail": 2, "n_rubric_rated": 17, "n_msg": 0, "n_tools": 0, "has_traj": false}, {"messages": [], "model": "claude-opus-4-6", "status": "passed", "v_status": "failed", "score": 16, "n_rubric_pass": 16, "n_rubric_fail": 1, "n_rubric_rated": 17, "n_msg": 0, "n_tools": 0, "has_traj": false}, {"messages": [], "model": "claude-opus-4-6", "status": "passed", "v_status": "passed", "score": 17, "n_rubric_pass": 17, "n_rubric_fail": 0, "n_rubric_rated": 17, "n_msg": 0, "n_tools": 0, "has_traj": false}, {"messages": [], "model": "claude-opus-4-6", "status": "passed", "v_status": "failed", "score": 15, "n_rubric_pass": 15, "n_rubric_fail": 2, "n_rubric_rated": 17, "n_msg": 0, "n_tools": 0, "has_traj": false}, {"messages": [], "model": "claude-opus-4-6", "status": "passed", "v_status": "failed", "score": 14, "n_rubric_pass": 14, "n_rubric_fail": 3, "n_rubric_rated": 17, "n_msg": 0, "n_tools": 0, "has_traj": false}, {"messages": [], "model": "claude-opus-4-6", "status": "passed", "v_status": "failed", "score": 16, "n_rubric_pass": 16, "n_rubric_fail": 1, "n_rubric_rated": 17, "n_msg": 0, "n_tools": 0, "has_traj": false}];
+var RUBRIC_DATA=[{"items": [{"text": "The model must use an email search tool (e.g., search_emails, list_emails, or get_email_threads) to search for Mosaic-related emails.", "weight": 1, "cat": "tool selection", "passed": true, "score": 1, "justification": "The agent made multiple search_emails calls with Mosaic-related queries including 'Mosaic', 'Tamara Byrd', 'damage claim Mosaic prototype', 'Blessing Okafor', 'Keiko Tanaka', 'Deshawn Hartley', 'surcharge approval Tamara', and others."}, {"text": "The model must use a Linear tool (e.g., linear_list_issues, linear_get_issue, or linear_list_projects) to search for Mosaic-related tickets.", "weight": 1, "cat": "tool selection", "passed": true, "score": 1, "justification": "The agent made multiple linear_list_issues calls with Mosaic-related queries including 'Mosaic', 'damage claim', 'stipend fraud', 'Okoye', 'Hartley', and 'Washington'."}, {"text": "The model must use a QuickBooks tool (e.g., quickbooks_search_invoices, quickbooks_search_bills, or quickbooks_search_accounts) to search for Mosaic-related financial records.", "weight": 1, "cat": "tool selection", "passed": true, "score": 1, "justification": "The agent called quickbooks_search_customers with criteria filtering for Mosaic, and quickbooks_search_invoices with Mosaic-related criteria, including a specific invoice lookup (INV-2026-0411)."}, {"text": "The model must use the send_email tool to send a summary to David Chen.", "weight": 1, "cat": "tool selection", "passed": true, "score": 1, "justification": "The agent used the send_email tool to send a comprehensive summary to David Chen at david.chen@moveops.com (CC: emeka.diallo@moveops.com) with the subject 'Mosaic Robotics — Full Account Situation Report (April Relocations)'."}, {"text": "The model must pass \"[david.chen@moveops.com](mailto:david.chen@moveops.com)\" to the \\`recipients\\` parameter when calling send_email.", "weight": 1, "cat": "query construction", "passed": true, "score": 1, "justification": "The send_email tool call explicitly used 'david.chen@moveops.com' as the recipients parameter."}, {"text": "The email body (in the send_email content parameter) identifies that a robotic arm prototype valued at approximately $90,000 was damaged during a Mosaic relocation from Savannah to Atlanta.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email body explicitly mentions: 'Zara Okoye (Savannah, GA → Atlanta, GA, COMPLETED WITH MAJOR INCIDENT): $90K prototype (robotic arm Unit #1) arrived damaged — cracked servo motor housing, 4+ degree calibration drift.'"}, {"text": "The email body (in the send_email content parameter) states that MoveOps' vendor liability coverage caps at approximately $50,000 per item, leaving approximately $40,000 uncovered.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email body explicitly states: 'MoveOps vendor liability coverage: $50K per item; uncovered gap: $40K.' This clearly identifies both the $50K coverage cap and the $40K gap."}, {"text": "The email body (in the send_email content parameter) identifies that the signed DOT hazmat placarding certificate for a Mosaic laser cutter shipment from Columbus to Seattle is missing.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email body explicitly states: 'Keiko Tanaka (Columbus, OH → Seattle, WA, IN PROGRESS — COMPLIANCE ISSUE): Missing DOT 49 CFR hazmat placarding certificate for a Class 3B laser cutter.' All required details are present."}, {"text": "The email body (in the send_email content parameter) identifies that coordinator Blessing Okafor signed off on Heartland Movers' packing remotely without physically verifying the anti-vibration foam or crating specifications.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email body explicitly states under Issue #1 root causes: 'remote packing sign-off by Blessing Okafor' — directly identifying the remote sign-off without physical verification as a root cause."}, {"text": "The email body (in the send_email content parameter) identifies that the Mosaic Robotics Client Accounts record in Airtable is outdated, and that it shows approximately 3 relocations when the Relocations table contains 7 Mosaic records, or that the client status still shows \"Onboarding\" despite being an active billing client.", "weight": 1, "cat": "outcome", "passed": false, "score": 0, "justification": "While the agent did search Airtable (Client Accounts, Relocations, Stipend Transactions tables), the email body does not mention the Airtable discrepancy between the Client Accounts table showing ~3 relocations vs. 7 records in the Relocations table, nor does it mention an outdated 'Onboarding' status."}, {"text": "The email body (in the send_email content parameter) connects Blessing Okafor to both the prototype damage incident and the DOT compliance gap, and identify coordinator overload as an issue.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email body explicitly states in the SYSTEMIC CONCERN section: 'Blessing Okafor is a contributing factor in both the Okoye damage claim and the Tanaka DOT gap — coordinator overload.' This directly connects her to both issues and identifies overload as the systemic problem."}, {"text": "The email body (in the send_email content parameter) mentions a Mosaic relocation with a hard delivery deadline of April 19, connected to the Automate 2026 trade show.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email body explicitly mentions: 'Deshawn Hartley (Tampa, FL → Denver, CO, IN PROGRESS — HARD DEADLINE): Must deliver by April 19 for Automate 2026 trade show (April 21–24).' Both the April 19 deadline and Automate 2026 are present."}, {"text": "An email was sent (via send_email) to [david.chen@moveops.com](mailto:david.chen@moveops.com), containing a summary of findings related to Mosaic Robotics April relocations, and the tool returned success.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The send_email tool was called with david.chen@moveops.com as recipient, containing a comprehensive Mosaic Robotics situation report, and the trajectory confirms all 59 tool calls returned SUCCESS."}, {"text": "The email body (in the send_email content parameter) identifies that Heartland Movers has a separate Q1 billing dispute involving approximately $4,800 in overbilling (or describes Heartland billing for moves they did not complete), independent of the prototype damage.", "weight": 1, "cat": "outcome", "passed": false, "score": 0, "justification": "The email body does not mention any separate Heartland Movers Q1 billing dispute involving approximately $4,800 in overbilling or billing for moves they did not complete. Heartland is mentioned only in the context of the $90K prototype damage claim and outstanding temperature logs."}, {"text": "Tool responses in the trajectory contain relocation records or data from at least 3 different services (e.g., Airtable, QuickBooks, Linear, Email, Slack, CRM) related to Mosaic Robotics.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "Tool responses returned Mosaic-related data from at least 6 distinct services: Email (search_emails), Linear (linear_list_issues), QuickBooks (quickbooks_search_invoices/customers), CRM (crm_search_contacts/companies/deals), Airtable (airtable_search_records), and Conversations/Slack (conversations_search_messages)."}, {"text": "The model must use a contact lookup tool (e.g., contacts_search_contacts, contacts_get_contacts, crm_search_contacts, or crm_get_contact) to look up David Chen's email address.", "weight": 1, "cat": "tool selection", "passed": true, "score": 1, "justification": "The agent called contacts_search_contacts with query 'David' (tool call #8) to look up David Chen's contact information before sending the email."}, {"text": "The model must pass a query related to \"David\" (or similar) when calling a contact lookup tool (e.g., contacts_search_contacts, crm_search_contacts).", "weight": 1, "cat": "query construction", "passed": true, "score": 1, "justification": "The contacts_search_contacts tool call used the query parameter 'David', which directly matches the requirement to pass a query related to 'David' or similar."}], "score": 15, "max": 17, "pct": 88}, {"items": [{"text": "The model must use an email search tool (e.g., search_emails, list_emails, or get_email_threads) to search for Mosaic-related emails.", "weight": 1, "cat": "tool selection", "passed": true, "score": 1, "justification": "The agent used `mcp__mcp_c4dd483f__search_emails` multiple times (at least 15 calls) with Mosaic-related queries including 'Mosaic', 'Tamara Byrd', 'Keiko Tanaka', 'Zara Okoye', 'INV-2026-0411', etc."}, {"text": "The model must use a Linear tool (e.g., linear_list_issues, linear_get_issue, or linear_list_projects) to search for Mosaic-related tickets.", "weight": 1, "cat": "tool selection", "passed": true, "score": 1, "justification": "The agent used `mcp__mcp_c4dd483f__linear_list_issues` 4 times with Mosaic-related queries: 'Mosaic' (found DOT docs ticket), 'STIP' and 'stipend duplicate' (found ENG-220), and 'Heartland' (found issue_heartland_q1_recon)."}, {"text": "The model must use a QuickBooks tool (e.g., quickbooks_search_invoices, quickbooks_search_bills, or quickbooks_search_accounts) to search for Mosaic-related financial records.", "weight": 1, "cat": "tool selection", "passed": true, "score": 1, "justification": "The agent used `mcp__mcp_c4dd483f__quickbooks_search_customers` with a Mosaic-related criteria and `mcp__mcp_c4dd483f__quickbooks_search_invoices` with CustomerRef 'Mosaic'. Both are QuickBooks financial search tools."}, {"text": "The model must use the send_email tool to send a summary to David Chen.", "weight": 1, "cat": "tool selection", "passed": true, "score": 1, "justification": "The agent used `mcp__mcp_c4dd483f__send_email` (call #41) with a comprehensive summary of findings. The tool returned success with email_id: d5ff1a54da4b42bdbf15a6ecb4b248ed."}, {"text": "The model must pass \"[david.chen@moveops.com](mailto:david.chen@moveops.com)\" to the \\`recipients\\` parameter when calling send_email.", "weight": 1, "cat": "query construction", "passed": true, "score": 1, "justification": "The send_email tool call had recipients: ['david.chen@moveops.com'], which matches the required email address."}, {"text": "The email body (in the send_email content parameter) identifies that a robotic arm prototype valued at approximately $90,000 was damaged during a Mosaic relocation from Savannah to Atlanta.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email body explicitly states: 'Zara Okoye's relocation from Savannah to Atlanta resulted in a damaged robotic arm prototype (Unit #1, valued at $90K).' All required elements (robotic arm, $90K, Savannah-to-Atlanta) are present."}, {"text": "The email body (in the send_email content parameter) states that MoveOps' vendor liability coverage caps at approximately $50,000 per item, leaving approximately $40,000 uncovered.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email body explicitly states: 'Our vendor liability insurance caps at $50K/item, leaving a $40K gap.' Both the $50K cap and $40K gap are clearly stated."}, {"text": "The email body (in the send_email content parameter) identifies that the signed DOT hazmat placarding certificate for a Mosaic laser cutter shipment from Columbus to Seattle is missing.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email body explicitly states: 'The Keiko Tanaka relocation (Columbus to Seattle) involved a Class 3B CO2 laser cutter requiring DOT hazmat placarding under 49 CFR. The signed placarding certificate was NEVER obtained by MoveOps.' All required elements are present."}, {"text": "The email body (in the send_email content parameter) identifies that coordinator Blessing Okafor signed off on Heartland Movers' packing remotely without physically verifying the anti-vibration foam or crating specifications.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email body explicitly states: 'Coordinator Blessing Okafor signed off on Heartland's packing checklist REMOTELY — she was in Philadelphia handling a concurrent Canopy Health move. The 4-inch foam density crating spec was never physically verified.' All required elements are present."}, {"text": "The email body (in the send_email content parameter) identifies that the Mosaic Robotics Client Accounts record in Airtable is outdated, and that it shows approximately 3 relocations when the Relocations table contains 7 Mosaic records, or that the client status still shows \"Onboarding\" despite being an active billing client.", "weight": 1, "cat": "outcome", "passed": false, "score": 0, "justification": "No Airtable tool calls were made anywhere in the agent's trajectory (42 total tool calls, none to Airtable). The word 'Airtable' does not appear in the email body. The discrepancy between '3 relocations' in Client Accounts vs. '7 records' in Relocations table, or the outdated 'Onboarding' status, was never identified."}, {"text": "The email body (in the send_email content parameter) connects Blessing Okafor to both the prototype damage incident and the DOT compliance gap, and identify coordinator overload as an issue.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email body connects Blessing Okafor to both issues: for the prototype damage ('Coordinator Blessing Okafor signed off on Heartland's packing checklist REMOTELY') and for the DOT gap ('Blessing Okafor got verbal confirmation from the Swift driver but didn't follow up — she was overloaded handling the Okoye and Okonkwo moves simultaneously'). The email explicitly identifies 'coordinator overload' multiple times, including in the 'Things That Could Blow Up' section."}, {"text": "The email body (in the send_email content parameter) mentions a Mosaic relocation with a hard delivery deadline of April 19, connected to the Automate 2026 trade show.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email body explicitly states: 'Deshawn Hartley's Tampa-to-Denver move had a firm April 19 deadline (lead presenter at Automate 2026, booth setup starts April 20).' Both the April 19 deadline and Automate 2026 trade show are present."}, {"text": "An email was sent (via send_email) to [david.chen@moveops.com](mailto:david.chen@moveops.com), containing a summary of findings related to Mosaic Robotics April relocations, and the tool returned success.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The send_email tool was called with david.chen@moveops.com as recipient and a comprehensive Mosaic summary as the body. The tool returned successfully with email_id: d5ff1a54da4b42bdbf15a6ecb4b248ed."}, {"text": "The email body (in the send_email content parameter) identifies that Heartland Movers has a separate Q1 billing dispute involving approximately $4,800 in overbilling (or describes Heartland billing for moves they did not complete), independent of the prototype damage.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email body explicitly states: 'Heartland overbilled $4,800 on their Q1 invoice (3 of 8 billed moves were cancelled or handled by Swift). Payment hold on the full $12,800 invoice.' The $4,800 Heartland overbilling is clearly identified as separate from the prototype damage."}, {"text": "Tool responses in the trajectory contain relocation records or data from at least 3 different services (e.g., Airtable, QuickBooks, Linear, Email, Slack, CRM) related to Mosaic Robotics.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The agent retrieved Mosaic-related data from at least 5 distinct services: Email (search_emails found damage complaint, placarding reply, invoice emails), Slack (conversations_search_messages found Emeka's messages about damage claim), Linear (linear_list_issues found DOT ticket and ENG-220), CRM (crm_search_companies, crm_search_contacts, crm_search_deals, contacts_search_contacts), and QuickBooks (quickbooks_search_invoices, quickbooks_search_customers)."}, {"text": "The model must use a contact lookup tool (e.g., contacts_search_contacts, contacts_get_contacts, crm_search_contacts, or crm_get_contact) to look up David Chen's email address.", "weight": 1, "cat": "tool selection", "passed": true, "score": 1, "justification": "The agent used `mcp__mcp_c4dd483f__contacts_search_contacts` (call #14) with query 'David', which returned david.chen@moveops.com. This is a contact lookup tool used to find David Chen's email address."}, {"text": "The model must pass a query related to \"David\" (or similar) when calling a contact lookup tool (e.g., contacts_search_contacts, crm_search_contacts).", "weight": 1, "cat": "query construction", "passed": true, "score": 1, "justification": "Call #14 used `contacts_search_contacts` with query parameter 'David', which matches the requirement to pass a query related to 'David' when calling a contact lookup tool."}], "score": 16, "max": 17, "pct": 94}, {"items": [{"text": "The model must use an email search tool (e.g., search_emails, list_emails, or get_email_threads) to search for Mosaic-related emails.", "weight": 1, "cat": "tool selection", "passed": true, "score": 1, "justification": "The agent called `mcp__mcp_2c2a142b__search_emails` multiple times with Mosaic-related queries including 'Mosaic', 'Tamara Byrd', 'Emeka Mosaic April', 'damage prototype Mosaic', 'Blessing Okafor Mosaic', and others. These calls returned Mosaic-relevant email results."}, {"text": "The model must use a Linear tool (e.g., linear_list_issues, linear_get_issue, or linear_list_projects) to search for Mosaic-related tickets.", "weight": 1, "cat": "tool selection", "passed": true, "score": 1, "justification": "The agent called `mcp__mcp_2c2a142b__linear_list_issues` multiple times with Mosaic-related queries including 'Mosaic', 'Andre Washington', 'stipend', 'damage incident', and 'incident report Okoye'. Results included DOT compliance audit tickets and engineering tickets."}, {"text": "The model must use a QuickBooks tool (e.g., quickbooks_search_invoices, quickbooks_search_bills, or quickbooks_search_accounts) to search for Mosaic-related financial records.", "weight": 1, "cat": "tool selection", "passed": true, "score": 1, "justification": "The agent called `mcp__mcp_2c2a142b__quickbooks_search_invoices` and `mcp__mcp_2c2a142b__quickbooks_search_customers` multiple times with Mosaic-related criteria, retrieving financial records including invoices."}, {"text": "The model must use the send_email tool to send a summary to David Chen.", "weight": 1, "cat": "tool selection", "passed": true, "score": 1, "justification": "The agent called `mcp__mcp_2c2a142b__send_email` at item 82 with a comprehensive summary email to David Chen. The tool returned a success response with an email ID."}, {"text": "The model must pass \"[david.chen@moveops.com](mailto:david.chen@moveops.com)\" to the \\`recipients\\` parameter when calling send_email.", "weight": 1, "cat": "query construction", "passed": true, "score": 1, "justification": "The send_email call at item 82 explicitly included 'david.chen@moveops.com' in the 'recipients' parameter array."}, {"text": "The email body (in the send_email content parameter) identifies that a robotic arm prototype valued at approximately $90,000 was damaged during a Mosaic relocation from Savannah to Atlanta.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email content explicitly states: 'a $90,000 robotic arm prototype was delivered damaged during Zara Okoye's relocation' and the move is identified as 'Savannah → Atlanta'. All three elements (robotic arm prototype, approximately $90K value, Savannah-to-Atlanta move) are present."}, {"text": "The email body (in the send_email content parameter) states that MoveOps' vendor liability coverage caps at approximately $50,000 per item, leaving approximately $40,000 uncovered.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email content explicitly states: 'Our vendor liability caps at $50K/item. The prototype is valued at $90K. That's a $40K uncovered gap that MoveOps may absorb if Heartland disputes liability.' Both the $50K cap and $40K gap are clearly identified."}, {"text": "The email body (in the send_email content parameter) identifies that the signed DOT hazmat placarding certificate for a Mosaic laser cutter shipment from Columbus to Seattle is missing.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email content explicitly states: 'the signed hazmat placarding certificate for Keiko Tanaka's laser cutter move (Class 3B CO2 laser, $35K value) is MISSING' and the move is identified as 'Columbus OH → Seattle'. All required elements are present."}, {"text": "The email body (in the send_email content parameter) identifies that coordinator Blessing Okafor signed off on Heartland Movers' packing remotely without physically verifying the anti-vibration foam or crating specifications.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email content explicitly states: 'Coordinator Blessing Okafor signed off on Heartland Movers' packing checklist REMOTELY from Philadelphia — she never physically verified the anti-vibration foam met the 4-inch minimum spec in the work order.' Both the remote sign-off and the reference to foam/crating spec are clearly identified."}, {"text": "The email body (in the send_email content parameter) identifies that the Mosaic Robotics Client Accounts record in Airtable is outdated, and that it shows approximately 3 relocations when the Relocations table contains 7 Mosaic records, or that the client status still shows \"Onboarding\" despite being an active billing client.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email content states: 'The Mosaic Client Accounts record in Airtable still shows \"Total Relocations: 3\" and Status: \"Onboarding.\" In reality, there are 7 relocations.' Both the outdated relocation count (3 vs. 7) and the stale 'Onboarding' status are explicitly called out."}, {"text": "The email body (in the send_email content parameter) connects Blessing Okafor to both the prototype damage incident and the DOT compliance gap, and identify coordinator overload as an issue.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email connects Blessing Okafor to both issues: for the prototype damage she 'signed off REMOTELY...She was simultaneously coordinating a Canopy Health move,' and for the DOT cert she 'received verbal confirmation...but never obtained the signed certificate. She was juggling the Okoye and Okonkwo moves the same week.' The email concludes: 'Blessing was stretched across three concurrent moves and that's where most of the process failures originated.'"}, {"text": "The email body (in the send_email content parameter) mentions a Mosaic relocation with a hard delivery deadline of April 19, connected to the Automate 2026 trade show.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email explicitly mentions 'DESHAWN HARTLEY HARD DEADLINE (Tampa → Denver, must deliver by April 19)' and states he is 'the lead presenter at Mosaic's Automate 2026 booth (April 21–24). Booth setup starts April 20. There is ZERO flexibility on the April 19 delivery deadline.' All elements (April 19, Automate 2026, delivery deadline) are present."}, {"text": "An email was sent (via send_email) to [david.chen@moveops.com](mailto:david.chen@moveops.com), containing a summary of findings related to Mosaic Robotics April relocations, and the tool returned success.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The send_email tool was called with david.chen@moveops.com as the recipient and contained a comprehensive Mosaic Robotics summary. The tool returned a success response: '{\"email_id\": \"812f423eced645838bf9492818236bf2\"}' confirming successful delivery."}, {"text": "The email body (in the send_email content parameter) identifies that Heartland Movers has a separate Q1 billing dispute involving approximately $4,800 in overbilling (or describes Heartland billing for moves they did not complete), independent of the prototype damage.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email content explicitly states: 'Heartland has an open Q1 billing dispute: they submitted a $12,800 invoice for 8 moves, but Chloe's audit found only 5 were legitimate ($4,800 overbilling). Includes billing for cancelled moves and a move they never performed.' The $4,800 overbilling dispute is clearly identified independently of the prototype damage."}, {"text": "Tool responses in the trajectory contain relocation records or data from at least 3 different services (e.g., Airtable, QuickBooks, Linear, Email, Slack, CRM) related to Mosaic Robotics.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "Tool responses returned Mosaic-related data from at least 6 distinct services: Email (search_emails), Linear (linear_list_issues), QuickBooks (quickbooks_search_invoices), Airtable (airtable_search_records for Relocations, Stipend Transactions, and Client Accounts), CRM (crm_search_companies, crm_search_contacts, crm_search_deals), and Slack/conversations (conversations_search_messages)."}, {"text": "The model must use a contact lookup tool (e.g., contacts_search_contacts, contacts_get_contacts, crm_search_contacts, or crm_get_contact) to look up David Chen's email address.", "weight": 1, "cat": "tool selection", "passed": true, "score": 1, "justification": "The agent called both `mcp__mcp_2c2a142b__crm_search_contacts` with `{\"full_name\": \"David\"}` (item 8) and `mcp__mcp_2c2a142b__contacts_search_contacts` with `{\"query\": \"David\"}` (item 16) to look up David Chen's contact information before sending the email."}, {"text": "The model must pass a query related to \"David\" (or similar) when calling a contact lookup tool (e.g., contacts_search_contacts, crm_search_contacts).", "weight": 1, "cat": "query construction", "passed": true, "score": 1, "justification": "The agent passed 'David' as the query when calling contact lookup tools: `crm_search_contacts` used `{\"full_name\": \"David\"}` and `contacts_search_contacts` used `{\"query\": \"David\"}`. Both clearly relate to finding David Chen."}], "score": 17, "max": 17, "pct": 100}, {"items": [{"text": "The model must use an email search tool (e.g., search_emails, list_emails, or get_email_threads) to search for Mosaic-related emails.", "weight": 1, "cat": "tool selection", "passed": true, "score": 1, "justification": "The agent made 12 email search tool calls (mcp__mcp_f639d6bd__search_emails) with Mosaic-related queries including 'Mosaic', 'Tamara Byrd', 'Emeka', 'damage claim prototype', 'STIP-2026-0094', 'Andre Washington stipend', 'incident report Heartland', 'Deshawn Hartley', 'Keiko Tanaka', 'surcharge approval Tamara', 'incident report April 17', 'Emeka Diallo Mosaic acknowledge', and 'Chloe Vance incident'."}, {"text": "The model must use a Linear tool (e.g., linear_list_issues, linear_get_issue, or linear_list_projects) to search for Mosaic-related tickets.", "weight": 1, "cat": "tool selection", "passed": true, "score": 1, "justification": "The agent made 4 linear_list_issues calls with queries including 'Mosaic' (which returned the DOT compliance ticket), 'stipend' (which returned ENG-220 about duplicate receipt detection), 'Blessing Okafor', and 'damage'."}, {"text": "The model must use a QuickBooks tool (e.g., quickbooks_search_invoices, quickbooks_search_bills, or quickbooks_search_accounts) to search for Mosaic-related financial records.", "weight": 1, "cat": "tool selection", "passed": true, "score": 1, "justification": "The agent made multiple QuickBooks tool calls: quickbooks_search_invoices with CustomerRef 'Mosaic' and CustomerRef.value 'cust_mosaic', and quickbooks_search_customers calls. Financial data was retrieved including invoices and customer records."}, {"text": "The model must use the send_email tool to send a summary to David Chen.", "weight": 1, "cat": "tool selection", "passed": true, "score": 1, "justification": "The agent used the send_email tool (Call [86]) and it returned success with email ID d430310de9614c0eb0252ffb9c5686d6. The email was sent to david.chen@moveops.com with a comprehensive Mosaic situation report."}, {"text": "The model must pass \"[david.chen@moveops.com](mailto:david.chen@moveops.com)\" to the \\`recipients\\` parameter when calling send_email.", "weight": 1, "cat": "query construction", "passed": true, "score": 1, "justification": "The send_email tool call at Call [86] included recipients: ['david.chen@moveops.com'], which is the correct email address for David Chen."}, {"text": "The email body (in the send_email content parameter) identifies that a robotic arm prototype valued at approximately $90,000 was damaged during a Mosaic relocation from Savannah to Atlanta.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email body explicitly states: 'Relocation: Zara Okoye, Savannah → Atlanta, April 14–15' and 'A $90,000 robotic arm prototype arrived with a cracked servo motor housing and 4+ degree calibration drift.' All required elements are present."}, {"text": "The email body (in the send_email content parameter) states that MoveOps' vendor liability coverage caps at approximately $50,000 per item, leaving approximately $40,000 uncovered.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email explicitly states: 'Financial exposure: $40K uncovered gap (coverage caps at $50K/item).' Both the $50K coverage cap and the $40K gap are clearly identified."}, {"text": "The email body (in the send_email content parameter) identifies that the signed DOT hazmat placarding certificate for a Mosaic laser cutter shipment from Columbus to Seattle is missing.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email states: 'Relocation: Keiko Tanaka, Columbus → Seattle, April 15–23. Vendor: Swift Relocations... Signed DOT hazmat placarding certificate for the laser cutter shipment was never obtained. Under 49 CFR 107.329, penalties up to $59,017/day.' All required elements are present."}, {"text": "The email body (in the send_email content parameter) identifies that coordinator Blessing Okafor signed off on Heartland Movers' packing remotely without physically verifying the anti-vibration foam or crating specifications.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email explicitly states: 'Blessing Okafor signed off on Heartland's packing checklist remotely while physically in Philadelphia coordinating a Canopy Health move — she never visually verified the 4-inch anti-vibration foam spec.' Both the remote sign-off and the failure to verify foam/crating specifications are mentioned."}, {"text": "The email body (in the send_email content parameter) identifies that the Mosaic Robotics Client Accounts record in Airtable is outdated, and that it shows approximately 3 relocations when the Relocations table contains 7 Mosaic records, or that the client status still shows \"Onboarding\" despite being an active billing client.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email's ISSUE 7 — DATA HYGIENE GAPS section explicitly states: 'Airtable shows Total Relocations: 3 (actual: 7), client status still Onboarding.' Both the discrepancy in relocation counts and the outdated Onboarding status are identified."}, {"text": "The email body (in the send_email content parameter) connects Blessing Okafor to both the prototype damage incident and the DOT compliance gap, and identify coordinator overload as an issue.", "weight": 1, "cat": "outcome", "passed": false, "score": 0, "justification": "The email attributes the DOT compliance gap to 'Coordinator: Javier Morales', not Blessing Okafor. Blessing Okafor is only connected to the prototype damage incident. The email does not link Blessing Okafor to both issues, nor does it mention coordinator overload as a systemic concern."}, {"text": "The email body (in the send_email content parameter) mentions a Mosaic relocation with a hard delivery deadline of April 19, connected to the Automate 2026 trade show.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email's ISSUE 6 states: 'Tampa → Denver, hard delivery deadline April 19. Deshawn is lead presenter at Mosaic's Automate 2026 booth (April 21–24, Denver Convention Center). Airtable still shows In Progress, no delivery confirmation found.' All required elements are present."}, {"text": "An email was sent (via send_email) to [david.chen@moveops.com](mailto:david.chen@moveops.com), containing a summary of findings related to Mosaic Robotics April relocations, and the tool returned success.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The send_email tool was called with recipient david.chen@moveops.com, with a comprehensive summary of Mosaic Robotics April relocation findings. The tool returned success with email ID d430310de9614c0eb0252ffb9c5686d6."}, {"text": "The email body (in the send_email content parameter) identifies that Heartland Movers has a separate Q1 billing dispute involving approximately $4,800 in overbilling (or describes Heartland billing for moves they did not complete), independent of the prototype damage.", "weight": 1, "cat": "outcome", "passed": false, "score": 0, "justification": "The email does not mention a separate Heartland Movers Q1 billing dispute involving approximately $4,800 in overbilling or billing for moves they did not complete. Heartland is mentioned only in connection with the $90K prototype damage claim."}, {"text": "Tool responses in the trajectory contain relocation records or data from at least 3 different services (e.g., Airtable, QuickBooks, Linear, Email, Slack, CRM) related to Mosaic Robotics.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The agent retrieved Mosaic-related data from at least 6 distinct services: Email (search_emails returned Tamara Byrd emails, Keiko Tanaka emails, etc.), Linear (DOT docs ticket, ENG-220), CRM (Tamara Byrd contact, Mosaic company, deals, engagements), Airtable (7 relocation records, stipend transactions, client accounts), Slack (conversations), and attempted QuickBooks (customers list). Well above the 3-service threshold."}, {"text": "The model must use a contact lookup tool (e.g., contacts_search_contacts, contacts_get_contacts, crm_search_contacts, or crm_get_contact) to look up David Chen's email address.", "weight": 1, "cat": "tool selection", "passed": true, "score": 1, "justification": "Call [18] used contacts_search_contacts with query 'David', which returned David Chen's contact record including his email address david.chen@moveops.com. This lookup was performed before sending the email."}, {"text": "The model must pass a query related to \"David\" (or similar) when calling a contact lookup tool (e.g., contacts_search_contacts, crm_search_contacts).", "weight": 1, "cat": "query construction", "passed": true, "score": 1, "justification": "Call [18] passed query 'David' to the contacts_search_contacts tool, which returned David Chen's contact details including his email address."}], "score": 15, "max": 17, "pct": 88}, {"items": [{"text": "The model must use an email search tool (e.g., search_emails, list_emails, or get_email_threads) to search for Mosaic-related emails.", "weight": 1, "cat": "tool selection", "passed": true, "score": 1, "justification": "The agent made 15 calls to search_emails with Mosaic-related queries including 'Mosaic', 'Tamara Byrd', 'Emeka', 'Deshawn Hartley', 'Keiko Tanaka', 'Andre Washington relocation', and others. Email search was thoroughly used."}, {"text": "The model must use a Linear tool (e.g., linear_list_issues, linear_get_issue, or linear_list_projects) to search for Mosaic-related tickets.", "weight": 1, "cat": "tool selection", "passed": true, "score": 1, "justification": "The agent made 5 calls to linear_list_issues with queries including 'Mosaic', 'stipend', 'damage claim', 'Deshawn Hartley', and 'Andre Washington'. This found the DOT docs issue (issue_dot_docs_tanaka_mosaic), the stipend duplicate detection issue, and the Washington movers coordination issue."}, {"text": "The model must use a QuickBooks tool (e.g., quickbooks_search_invoices, quickbooks_search_bills, or quickbooks_search_accounts) to search for Mosaic-related financial records.", "weight": 1, "cat": "tool selection", "passed": true, "score": 1, "justification": "The agent called quickbooks_search_customers (querying for Mosaic) and quickbooks_search_invoices (querying for INV-2026-0411), successfully retrieving a Mosaic Robotics invoice for $9,010."}, {"text": "The model must use the send_email tool to send a summary to David Chen.", "weight": 1, "cat": "tool selection", "passed": true, "score": 1, "justification": "The agent made a send_email call to david.chen@moveops.com with subject 'Mosaic Robotics — April Moves: Full Situation Report & Open Risk Items'. The tool returned success with email_id: 57731c3fc8e54c49bd47a289ff10e521."}, {"text": "The model must pass \"[david.chen@moveops.com](mailto:david.chen@moveops.com)\" to the \\`recipients\\` parameter when calling send_email.", "weight": 1, "cat": "query construction", "passed": true, "score": 1, "justification": "The send_email call explicitly used 'david.chen@moveops.com' as the recipients parameter, confirmed in the trajectory."}, {"text": "The email body (in the send_email content parameter) identifies that a robotic arm prototype valued at approximately $90,000 was damaged during a Mosaic relocation from Savannah to Atlanta.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email to David Chen explicitly covers Issue 1: a cracked servo motor ($90K damage) for Zara Okoye's move from Savannah, GA to Atlanta, GA, transported by Heartland Movers. The $90K robotic arm prototype damage is clearly identified."}, {"text": "The email body (in the send_email content parameter) states that MoveOps' vendor liability coverage caps at approximately $50,000 per item, leaving approximately $40,000 uncovered.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email content explicitly states 'MoveOps liability caps at $50K per item; damage is $90K' with a $40K gap. This matches the criterion's requirement to identify the approximately $50K coverage cap and $40K uncovered amount."}, {"text": "The email body (in the send_email content parameter) identifies that the signed DOT hazmat placarding certificate for a Mosaic laser cutter shipment from Columbus to Seattle is missing.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email to David identifies the DOT compliance issue for Keiko Tanaka's move (Columbus, OH → Seattle, WA) involving a Class 3B CO2 laser (Epilog Fusion Pro 48), with the signed DOT placarding certificate explicitly noted as MISSING from records."}, {"text": "The email body (in the send_email content parameter) identifies that coordinator Blessing Okafor signed off on Heartland Movers' packing remotely without physically verifying the anti-vibration foam or crating specifications.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email content explicitly states 'Blessing Okafor signed off remotely without physical verification' in the context of the prototype damage incident, addressing the root cause of the crating/foam spec failures."}, {"text": "The email body (in the send_email content parameter) identifies that the Mosaic Robotics Client Accounts record in Airtable is outdated, and that it shows approximately 3 relocations when the Relocations table contains 7 Mosaic records, or that the client status still shows \"Onboarding\" despite being an active billing client.", "weight": 1, "cat": "outcome", "passed": false, "score": 0, "justification": "The agent searched Airtable (airtable_search_records on Relocations and Stipend Transactions tables) but both searches returned 'No records found'. The agent did not discover or report the discrepancy between the Client Accounts record showing ~3 relocations vs. 7 actual Mosaic records, nor the outdated 'Onboarding' status. No mention of this data integrity issue appears in the email to David."}, {"text": "The email body (in the send_email content parameter) connects Blessing Okafor to both the prototype damage incident and the DOT compliance gap, and identify coordinator overload as an issue.", "weight": 1, "cat": "outcome", "passed": false, "score": 0, "justification": "The email mentions Blessing Okafor only in connection with Issue 1 (the prototype damage/remote sign-off). Issue 2 (DOT compliance for Keiko Tanaka) mentions Greg Pallone and Chloe Vance but not Blessing Okafor. The email does not connect Blessing Okafor to both failures as a pattern, and does not mention coordinator overload as a systemic concern. The only overload mentioned is Emeka being overwhelmed."}, {"text": "The email body (in the send_email content parameter) mentions a Mosaic relocation with a hard delivery deadline of April 19, connected to the Automate 2026 trade show.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email to David explicitly identifies Issue 5 as 'Deshawn Hartley Deadline' with an 'April 19 (hard, non-negotiable)' delivery deadline connected to 'Automate 2026, booth setup April 20'. Both the April 19 deadline and the Automate 2026 trade show connection are present."}, {"text": "An email was sent (via send_email) to [david.chen@moveops.com](mailto:david.chen@moveops.com), containing a summary of findings related to Mosaic Robotics April relocations, and the tool returned success.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The send_email tool was called with david.chen@moveops.com as recipient and a comprehensive Mosaic summary as content. The tool returned success with email_id: 57731c3fc8e54c49bd47a289ff10e521."}, {"text": "The email body (in the send_email content parameter) identifies that Heartland Movers has a separate Q1 billing dispute involving approximately $4,800 in overbilling (or describes Heartland billing for moves they did not complete), independent of the prototype damage.", "weight": 1, "cat": "outcome", "passed": false, "score": 0, "justification": "No mention of a $4,800 Heartland Movers billing dispute appears anywhere in the trajectory or in the email content sent to David. Heartland is only discussed in the context of the $90K prototype damage incident. The overbilling dispute was not discovered or reported."}, {"text": "Tool responses in the trajectory contain relocation records or data from at least 3 different services (e.g., Airtable, QuickBooks, Linear, Email, Slack, CRM) related to Mosaic Robotics.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "At least 5 different services returned Mosaic-related data: Email (multiple emails about damage, DOT compliance, deadlines, finance), CRM (Mosaic Robotics company record, Tamara Byrd contact, 5 deals), Linear (3 Mosaic-related tickets), Slack (messages referencing Mosaic staffing/incident summary), and QuickBooks (invoice INV-2026-0411 for $9,010). This clearly exceeds the 3-service threshold."}, {"text": "The model must use a contact lookup tool (e.g., contacts_search_contacts, contacts_get_contacts, crm_search_contacts, or crm_get_contact) to look up David Chen's email address.", "weight": 1, "cat": "tool selection", "passed": true, "score": 1, "justification": "The agent called contacts_search_contacts with query 'David', which returned David Chen (moveops_david_chen, Customer Engagement, San Francisco) with his contact details including his email address."}, {"text": "The model must pass a query related to \"David\" (or similar) when calling a contact lookup tool (e.g., contacts_search_contacts, crm_search_contacts).", "weight": 1, "cat": "query construction", "passed": true, "score": 1, "justification": "The contacts_search_contacts call used the query 'David', which matches the criterion's requirement to pass a query related to 'David' (or similar) when looking up David Chen's contact information."}], "score": 14, "max": 17, "pct": 82}, {"items": [{"text": "The model must use an email search tool (e.g., search_emails, list_emails, or get_email_threads) to search for Mosaic-related emails.", "weight": 1, "cat": "tool selection", "passed": true, "score": 1, "justification": "The agent called mcp__mcp_5004e799__search_emails 11 times with Mosaic-related queries (e.g., 'Mosaic', 'Tamara Byrd', 'Emeka', 'Heartland damage', 'incident report Tamara', etc.), fully satisfying this criterion."}, {"text": "The model must use a Linear tool (e.g., linear_list_issues, linear_get_issue, or linear_list_projects) to search for Mosaic-related tickets.", "weight": 1, "cat": "tool selection", "passed": true, "score": 1, "justification": "The agent called mcp__mcp_5004e799__linear_list_issues 5 times with Mosaic-related queries (e.g., query: 'Mosaic', 'DOT compliance', 'Heartland', 'stipend'), fully satisfying this criterion."}, {"text": "The model must use a QuickBooks tool (e.g., quickbooks_search_invoices, quickbooks_search_bills, or quickbooks_search_accounts) to search for Mosaic-related financial records.", "weight": 1, "cat": "tool selection", "passed": true, "score": 1, "justification": "The agent called quickbooks_search_invoices (twice), quickbooks_search_bills (once), and quickbooks_search_customers (three times) with Mosaic-related criteria, satisfying this criterion."}, {"text": "The model must use the send_email tool to send a summary to David Chen.", "weight": 1, "cat": "tool selection", "passed": true, "score": 1, "justification": "The agent called mcp__mcp_5004e799__send_email at index [100] with a detailed Mosaic Robotics summary addressed to David Chen."}, {"text": "The model must pass \"[david.chen@moveops.com](mailto:david.chen@moveops.com)\" to the \\`recipients\\` parameter when calling send_email.", "weight": 1, "cat": "query construction", "passed": true, "score": 1, "justification": "The send_email recipients parameter was set to ['david.chen@moveops.com'], exactly matching the required address."}, {"text": "The email body (in the send_email content parameter) identifies that a robotic arm prototype valued at approximately $90,000 was damaged during a Mosaic relocation from Savannah to Atlanta.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email body explicitly identifies Zara Okoye's robotic arm prototype (valued at $90K each) damaged during a Savannah-to-Atlanta relocation on April 15, including the cracked servo motor housing and calibration drift."}, {"text": "The email body (in the send_email content parameter) states that MoveOps' vendor liability coverage caps at approximately $50,000 per item, leaving approximately $40,000 uncovered.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email body explicitly states that MoveOps vendor liability coverage caps at $50K per item, leaving a $40K uncovered gap on the $90K prototype damage claim."}, {"text": "The email body (in the send_email content parameter) identifies that the signed DOT hazmat placarding certificate for a Mosaic laser cutter shipment from Columbus to Seattle is missing.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email body identifies that Keiko Tanaka's Columbus-to-Seattle laser cutter shipment is missing the required signed DOT placarding certificate, noting Chloe Vance confirmed it was not found in the shared drive, Airtable, or email."}, {"text": "The email body (in the send_email content parameter) identifies that coordinator Blessing Okafor signed off on Heartland Movers' packing remotely without physically verifying the anti-vibration foam or crating specifications.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email body explicitly identifies Blessing Okafor as signing off on Heartland Movers' packing checklist remotely from Philadelphia without physically verifying the 4-inch anti-vibration foam specification or crating spec."}, {"text": "The email body (in the send_email content parameter) identifies that the Mosaic Robotics Client Accounts record in Airtable is outdated, and that it shows approximately 3 relocations when the Relocations table contains 7 Mosaic records, or that the client status still shows \"Onboarding\" despite being an active billing client.", "weight": 1, "cat": "outcome", "passed": false, "score": 0, "justification": "The email body does not mention an Airtable data discrepancy (3 relocations in Client Accounts vs. 7 in the Relocations table) or an outdated 'Onboarding' status. All three Airtable searches (Relocations, Stipend Transactions, Client Accounts) returned empty results. Airtable is only mentioned in the email as a system that was audited and as a location where the DOT certificate was not found — no data integrity gap between tables is identified."}, {"text": "The email body (in the send_email content parameter) connects Blessing Okafor to both the prototype damage incident and the DOT compliance gap, and identify coordinator overload as an issue.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email body explicitly names Blessing Okafor in connection with both Issue #1 (remote sign-off on packing without physical verification) and Issue #2 (verbal-only confirmation on DOT placarding), and notes she was simultaneously handling multiple concurrent moves (Canopy Health, Okoye, and Okonkwo), flagging coordinator overload as a systemic concern."}, {"text": "The email body (in the send_email content parameter) mentions a Mosaic relocation with a hard delivery deadline of April 19, connected to the Automate 2026 trade show.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email body explicitly mentions Deshawn Hartley's non-negotiable April 19 delivery deadline and identifies him as the lead presenter at the Automate 2026 trade show (April 21-24, Denver Convention Center)."}, {"text": "An email was sent (via send_email) to [david.chen@moveops.com](mailto:david.chen@moveops.com), containing a summary of findings related to Mosaic Robotics April relocations, and the tool returned success.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The send_email tool was called with recipients ['david.chen@moveops.com'] and a comprehensive Mosaic Robotics summary, and the tool returned success with email_id 'eee797c94d32431aa761f876384de09f'."}, {"text": "The email body (in the send_email content parameter) identifies that Heartland Movers has a separate Q1 billing dispute involving approximately $4,800 in overbilling (or describes Heartland billing for moves they did not complete), independent of the prototype damage.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "The email body explicitly identifies a separate $4,800 Q1 overbilling dispute with Heartland Movers (bill HM-2026-Q1-0042, $12,800 total), noting they billed for 3 moves they didn't complete, with Linear ticket OPS-342 tracking the dispute."}, {"text": "Tool responses in the trajectory contain relocation records or data from at least 3 different services (e.g., Airtable, QuickBooks, Linear, Email, Slack, CRM) related to Mosaic Robotics.", "weight": 1, "cat": "outcome", "passed": true, "score": 1, "justification": "Tool responses contained Mosaic-related data from at least 5 distinct services: Email (search_emails returned Mosaic emails), Linear (linear_list_issues returned DOT/Heartland/stipend tickets), QuickBooks (quickbooks_search_invoices/bills returned Mosaic financial records), CRM (crm_search_companies/contacts returned Tamara Byrd and Emeka), and Conversations/Slack (conversations_search_messages returned Mosaic-related messages)."}, {"text": "The model must use a contact lookup tool (e.g., contacts_search_contacts, contacts_get_contacts, crm_search_contacts, or crm_get_contact) to look up David Chen's email address.", "weight": 1, "cat": "tool selection", "passed": true, "score": 1, "justification": "The agent called mcp__mcp_5004e799__contacts_search_contacts at index [22] with query 'David', which returned the contact record for David Chen (moveops_david_chen), satisfying this criterion."}, {"text": "The model must pass a query related to \"David\" (or similar) when calling a contact lookup tool (e.g., contacts_search_contacts, crm_search_contacts).", "weight": 1, "cat": "query construction", "passed": true, "score": 1, "justification": "The contacts_search_contacts tool was called with the parameter {'query': 'David'} at index [22], directly satisfying the requirement to pass a query related to 'David' when looking up the contact."}], "score": 16, "max": 17, "pct": 94}];
+
+var toolData=[];
+var currentRun=0;
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function showPage(name,btn){
+  document.querySelectorAll('.page').forEach(function(el){el.classList.remove('active');});
+  document.querySelectorAll('.top-tab').forEach(function(el){el.classList.remove('active');});
+  document.getElementById('page-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='runs'){renderChat(currentRun);renderRunRubrics(currentRun);}
+}
+
+function renderRunRubrics(ri){
+  var list=document.getElementById('rp-list');
+  var scoreEl=document.getElementById('rp-score');
+  var r=RUBRIC_DATA[ri];
+  if(!r){list.innerHTML='<div style="padding:40px;text-align:center;color:var(--text4);font-size:.8rem">No rubric data.</div>';scoreEl.textContent='';return;}
+  var cls=r.pct>=80?'rp-score-pos':r.pct>0?'rp-score-neg':'rp-score-zero';
+  scoreEl.className='rp-score '+cls;
+  scoreEl.textContent=r.score+'/'+r.max+' ('+r.pct+'%)';
+  var h='';
+  for(var i=0;i<r.items.length;i++){
+    var it=r.items[i];
+    var iconCls,icon;
+    if(it.score===1){iconCls='rp-icon-pass';icon='\u2713';}
+    else if(it.score===0){iconCls='rp-icon-fail';icon='\u2717';}
+    else{iconCls='rp-icon-na';icon='\u2014';}
+    var w=it.weight;
+    var wCls=w>0?'rp-w-pos':w<0?'rp-w-neg':'rp-w-neut';
+    var wStr=w>0?'+'+w:String(w);
+    h+='<div class="rp-item" data-action="expand">';
+    h+='<span class="rp-icon '+iconCls+'">'+icon+'</span>';
+    h+='<div class="rp-content">';
+    h+='<div class="rp-text">'+esc(it.text)+'</div>';
+    h+='<div class="rp-meta-row"><span class="rp-weight '+wCls+'">'+wStr+'</span><span class="rp-cat">'+esc(it.cat)+'</span></div>';
+    if(it.justification)h+='<div class="rp-just">'+esc(it.justification)+'</div>';
+    h+='</div></div>';
+  }
+  list.innerHTML=h;
+  list.scrollTop=0;
+}
+
+function renderChat(ri){
+  currentRun=ri;
+  toolData=[];
+  renderRunRubrics(ri);
+  var chat=document.getElementById('chat');
+  var rd=RUN_DATA[ri];
+  if(!rd||!rd.messages||!rd.messages.length){
+    var reason=rd&&rd.status==='errored'?'Agent errored — no trajectory available.':'No trajectory data for this run.';
+    chat.innerHTML='<div class="empty">'+reason+'</div>';return;
+  }
+
+  // Update run selector active state
+  document.querySelectorAll('.run-btn').forEach(function(b){b.classList.remove('active');});
+  var sel=document.querySelector('[data-run-idx="'+ri+'"]');
+  if(sel)sel.classList.add('active');
+
+  var msgs=rd.messages;
+  var h='';
+  for(var mi=0;mi<msgs.length;mi++){
+    var msg=msgs[mi];
+    var isUser=msg.role==='user';
+    var cls=isUser?'msg-user':'msg-assistant';
+    var aCls=isUser?'avatar-user':'avatar-assistant';
+    var bCls=isUser?'bubble-user':'bubble-assistant';
+    var aL=isUser?'U':'A';
+    var content='';
+
+    // Thinking
+    if(msg.thinking){
+      var thId='th-'+ri+'-'+mi;
+      content+='<div class="thinking" data-think-id="'+thId+'">Thinking…</div>';
+      content+='<div class="thinking-text" id="'+thId+'">'+esc(msg.thinking)+'</div>';
+    }
+
+    // Text
+    if(msg.text){
+      if(isUser){
+        var userText=msg.text;
+        if(userText.length>2000)userText=userText.substring(0,2000)+'\n\n... (truncated)';
+        content+='<div>'+esc(userText).replace(/\n/g,'<br>')+'</div>';
+      }else{
+        content+='<div class="md-content">'+marked.parse(msg.text)+'</div>';
+      }
+    }
+
+    // Tool chips (skip on last assistant message — those are final output tools)
+    var isLastAssistant=(!isUser && mi===msgs.length-1);
+    if(msg.tools&&msg.tools.length>0&&!isLastAssistant){
+      content+='<div class="tool-group">';
+      for(var ti=0;ti<msg.tools.length;ti++){
+        var idx=toolData.length;
+        toolData.push(msg.tools[ti]);
+        content+='<span class="tool-chip" data-modal-idx="'+idx+'">'+esc(msg.tools[ti].name)+'</span>';
+      }
+      content+='</div>';
+    }
+
+    h+='<div class="msg '+cls+'">';
+    h+='<div class="avatar '+aCls+'">'+aL+'</div>';
+    h+='<div><div class="bubble '+bCls+'">'+content+'</div>';
+    if(msg.ts)h+='<div class="msg-ts">'+msg.ts+'</div>';
+    h+='</div></div>';
+  }
+  chat.innerHTML=h;
+  document.getElementById('chat-container').scrollTop=0;
+}
+
+function showModal(idx){
+  var t=toolData[idx];if(!t)return;
+  document.getElementById('modal-title').textContent=t.name;
+  var h='';
+  h+='<div class="modal-section"><div class="modal-label">Parameters</div><div class="modal-code">'+esc(typeof t.args==='object'?JSON.stringify(t.args,null,2):(t.args||'{}'))+'</div></div>';
+  var result=t.result||'(no output)';
+  if(typeof result==='object')result=JSON.stringify(result,null,2);
+  h+='<div class="modal-section"><div class="modal-label">Output</div><div class="modal-code">'+esc(result)+'</div></div>';
+  document.getElementById('modal-body').innerHTML=h;
+  document.getElementById('modal-overlay').classList.add('active');
+}
+
+// Event delegation
+document.addEventListener('click',function(e){
+  var think=e.target.closest('[data-think-id]');
+  if(think){var t=document.getElementById(think.getAttribute('data-think-id'));if(t)t.style.display=t.style.display==='none'?'block':'none';return;}
+  var chip=e.target.closest('[data-modal-idx]');
+  if(chip){e.stopPropagation();showModal(parseInt(chip.getAttribute('data-modal-idx')));return;}
+  var rpItem=e.target.closest('.rp-item[data-action="expand"]');
+  if(rpItem){rpItem.classList.toggle('expanded');return;}
+  var runBtn=e.target.closest('[data-run-idx]');
+  if(runBtn){renderChat(parseInt(runBtn.getAttribute('data-run-idx')));return;}
+});
+
+document.getElementById('modal-close').addEventListener('click',function(){document.getElementById('modal-overlay').classList.remove('active');});
+document.getElementById('modal-overlay').addEventListener('click',function(e){if(e.target===e.currentTarget)e.currentTarget.classList.remove('active');});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')document.getElementById('modal-overlay').classList.remove('active');});
+
+// Rubric panel toggle
+document.getElementById('rubric-tab').addEventListener('click',function(){document.body.classList.add('rubric-open');});
+document.getElementById('rp-close').addEventListener('click',function(){document.body.classList.remove('rubric-open');});
+
+// Oracle panel toggle
+document.getElementById('oracle-tab').addEventListener('click',function(){document.body.classList.add('oracle-open');});
+document.getElementById('op-close').addEventListener('click',function(){document.body.classList.remove('oracle-open');});
+
+function toggleJust(idx){
+  var row=document.getElementById('just-'+idx);
+  row.style.display=row.style.display==='none'?'table-row':'none';
+}
+
+function toggleTheme(){
+  document.body.classList.toggle('dark');
+  var btn=document.getElementById('theme-btn');
+  btn.innerHTML=document.body.classList.contains('dark')?'&#9679; Light':'&#9679; Dark';
+}
+
+// Render prompt markdown on load
+var PROMPT_TEXT=`Tamara Byrd at Mosaic has been in contact with Emeka and I want to make sure I have the full picture before this gets any bigger. Can you go through everything related to the April Mosaic moves and tell me if anything looks off? Check across the board: emails, tickets, financials, whatever you can find. If there are any open issues, gaps in how things were handled, or anything that could blow up, I want to know. Once you have a clear picture, send David a summary so he's up to speed.`;
+(function(){var el=document.getElementById('prompt-md');if(el&&PROMPT_TEXT)el.innerHTML=marked.parse(PROMPT_TEXT);})();
+
+// ═══ Walkthrough Tour ═══
+(function(){
+  var overviewSteps=[
+    {el:'#wt-stats-bar',title:'Metrics at a Glance',body:'Key stats for this task: agent/verifier pass rates, criteria count, and tool usage across runs.',pos:'bottom'},
+    {el:'#wt-runs-summary',title:'Runs Summary',body:'A table showing each agent run with model, pass/fail status, message count, tool count, and overall score. Quickly compare run performance.',pos:'bottom'},
+    {el:'#wt-tool-breakdown',title:'Tool Usage Breakdown',body:'Shows which tools were called and how often in the best verifier-passing run (or max-tools run if none passed). Helps spot patterns in tool usage.',pos:'bottom'},
+    {el:'#wt-prompt',title:'Task Prompt',body:'The original prompt given to the agent. This is the instruction the agent attempts to fulfill across all runs.',pos:'top'},
+    {el:'#wt-oracle',title:'Oracle Events',body:'Expected actions or milestones the agent should hit. Used to verify the agent completed the right steps.',pos:'top'},
+    {el:'#wt-env',title:'Environments',body:'Three environment configurations: Verifier Env (used for verifier runs), Agent Runs Env (used for agent runs), and Explorer Env (the base/snapshotted environment).',pos:'top'}
+  ];
+  var runsSteps=[
+    {el:'#run-selector',title:'Run Selector',body:'Switch between agent runs. Each button shows the run number with message and tool counts. The active run is highlighted.',pos:'bottom'},
+    {el:'#chat-container',title:'Chat Conversation',body:'The full agent trajectory rendered as a chat. User messages appear on the left, agent responses on the right with rendered markdown.',pos:'left'},
+    {el:'#oracle-tab',title:'Oracle Events Panel',body:'Click this tab to slide open the oracle events — the expected actions or milestones the agent should complete. Use these to verify agent behaviour while reviewing the chat.',pos:'right'},
+    {el:'#rubric-tab',title:'Rubric Panel',body:'Click this tab to slide open a rubric panel showing pass/fail results and justifications for this specific run.',pos:'left'}
+  ];
+
+  var wtBackdrop,wtSpotlight,wtTooltip,wtSteps,wtIdx,wtPage;
+
+  function wtInit(){
+    wtBackdrop=document.createElement('div');wtBackdrop.className='wt-backdrop';
+    wtSpotlight=document.createElement('div');wtSpotlight.className='wt-spotlight wt-pulse';
+    wtTooltip=document.createElement('div');wtTooltip.className='wt-tooltip';
+    document.body.appendChild(wtBackdrop);document.body.appendChild(wtSpotlight);document.body.appendChild(wtTooltip);
+  }
+
+  function wtStart(steps,page){
+    if(!wtBackdrop)wtInit();
+    wtSteps=steps;wtIdx=0;wtPage=page;
+    wtBackdrop.classList.add('active');
+    wtShow();
+  }
+
+  function wtShow(){
+    if(wtIdx>=wtSteps.length){wtEnd();return;}
+    var step=wtSteps[wtIdx];
+    var el=document.querySelector(step.el);
+    if(!el){wtIdx++;wtShow();return;}
+    el.scrollIntoView({behavior:'smooth',block:'center'});
+    setTimeout(function(){
+      var r=el.getBoundingClientRect();
+      var pad=6;
+      wtSpotlight.style.display='block';
+      wtSpotlight.style.top=(r.top-pad)+'px';
+      wtSpotlight.style.left=(r.left-pad)+'px';
+      wtSpotlight.style.width=(r.width+pad*2)+'px';
+      wtSpotlight.style.height=(r.height+pad*2)+'px';
+
+      var n=wtIdx+1;var total=wtSteps.length;
+      var h='<div class="wt-tooltip-title">'+step.title+'</div>';
+      h+='<div class="wt-tooltip-body">'+step.body+'</div>';
+      h+='<div class="wt-tooltip-footer">';
+      h+='<span class="wt-step-count">'+n+' of '+total+'</span>';
+      h+='<div style="display:flex;gap:6px;align-items:center">';
+      h+='<button class="wt-btn-skip" onclick="window._wtEnd()">Skip</button>';
+      if(wtIdx>0)h+='<button class="wt-btn" onclick="window._wtPrev()">Back</button>';
+      h+='<button class="wt-btn wt-btn-primary" onclick="window._wtNext()">'+(n===total?'Done':'Next')+'</button>';
+      h+='</div></div>';
+
+      var arrowCls='wt-arrow-top';
+      wtTooltip.innerHTML=h;
+      wtTooltip.style.display='block';
+
+      // Position tooltip
+      var tw=360;
+      var tH=wtTooltip.offsetHeight;
+      if(step.pos==='bottom'){
+        wtTooltip.style.top=(r.bottom+14)+'px';
+        wtTooltip.style.left=Math.max(8,Math.min(r.left,window.innerWidth-tw-16))+'px';
+        arrowCls='wt-arrow-top';
+      }else if(step.pos==='top'){
+        wtTooltip.style.top=(r.top-tH-14)+'px';
+        wtTooltip.style.left=Math.max(8,Math.min(r.left,window.innerWidth-tw-16))+'px';
+        arrowCls='wt-arrow-bottom';
+      }else if(step.pos==='left'){
+        wtTooltip.style.top=Math.max(8,r.top)+'px';
+        wtTooltip.style.left=Math.max(8,r.left-tw-14)+'px';
+        arrowCls='';
+      }
+      // Remove old arrow, add new
+      var oldA=wtTooltip.querySelector('.wt-arrow');if(oldA)oldA.remove();
+      if(arrowCls){var arEl=document.createElement('div');arEl.className='wt-arrow '+arrowCls;wtTooltip.appendChild(arEl);}
+    },350);
+  }
+
+  function wtNext(){wtIdx++;wtShow();}
+  function wtPrev(){if(wtIdx>0)wtIdx--;wtShow();}
+  function wtEnd(){
+    wtBackdrop.classList.remove('active');
+    wtSpotlight.style.display='none';
+    wtTooltip.style.display='none';
+    // Remember dismissal per page
+    try{sessionStorage.setItem('wt_done_'+wtPage,'1');}catch(e){}
+  }
+
+  window._wtNext=wtNext;window._wtPrev=wtPrev;window._wtEnd=wtEnd;
+
+  // Launch on page show
+  var origShowPage=window.showPage||function(){};
+  function showPageHook(name,btn){
+    // Call original
+    document.querySelectorAll('.page').forEach(function(el){el.classList.remove('active');});
+    document.querySelectorAll('.top-tab').forEach(function(el){el.classList.remove('active');});
+    document.getElementById('page-'+name).classList.add('active');
+    btn.classList.add('active');
+    if(name==='runs'){renderChat(currentRun);renderRunRubrics(currentRun);}
+    // Trigger walkthrough
+    setTimeout(function(){
+      try{if(sessionStorage.getItem('wt_done_'+name))return;}catch(e){}
+      if(name==='overview')wtStart(overviewSteps,'overview');
+      else if(name==='runs')wtStart(runsSteps,'runs');
+    },500);
+  }
+  // Replace global showPage
+  window.showPage=showPageHook;
+
+  // Auto-launch overview walkthrough on first load
+  setTimeout(function(){
+    try{if(sessionStorage.getItem('wt_done_overview'))return;}catch(e){}
+    wtStart(overviewSteps,'overview');
+  },800);
+
+  // Allow re-launching via keyboard (press ?)
+  document.addEventListener('keydown',function(e){
+    if(e.key==='?'&&!e.ctrlKey&&!e.metaKey){
+      var activePage=document.querySelector('.page.active');
+      if(!activePage)return;
+      var id=activePage.id.replace('page-','');
+      // Clear stored dismissal
+      try{sessionStorage.removeItem('wt_done_'+id);}catch(ex){}
+      if(id==='overview')wtStart(overviewSteps,'overview');
+      else if(id==='runs')wtStart(runsSteps,'runs');
+    }
+  });
+})();
+</script>
+</body>
+</html>

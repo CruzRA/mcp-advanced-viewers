@@ -2,8 +2,9 @@
 credentials/*.json
 !credentials/.gitkeep
 
-# Generated output
-output/
+# Generated output (keep HTML viewers, ignore data)
+output/*
+!output/*.html
 
 # Python
 __pycache__/

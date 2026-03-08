@@ -11,8 +11,9 @@
 !mcp_advanced/
 !mcp_advanced/*.py
 
-# ── But still ignore generated output & secrets inside allowed dirs ──
-pipeline/output/
+# ── But still ignore secrets & bulky data inside allowed dirs ──
+pipeline/output/*
+!pipeline/output/*.html
 pipeline/credentials/*.json
 pipeline/.env
 pipeline/__pycache__/

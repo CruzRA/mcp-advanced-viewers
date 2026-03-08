@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCP Advanced — Task Overview</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/@sgratzl/chartjs-chart-boxplot@4"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#f0f2f5;--bg2:#fff;--bg3:#f6f8fa;--border:#d8dee4;
+  --text:#1b1f24;--text2:#4d5561;--text3:#656d76;--text4:#8b949e;
+  --accent:#0969da;--green:#1a7f37;--red:#cf222e;--amber:#bf8700;
+}
+body.dark{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#1c2129;--border:#30363d;
+  --text:#e6edf3;--text2:#b1bac4;--text3:#8b949e;--text4:#6e7681;
+  --accent:#58a6ff;--green:#3fb950;--red:#f85149;--amber:#d29922;
+}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;min-height:100vh;}
+
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.topbar h1{font-size:1rem;font-weight:700;white-space:nowrap;}
+.topbar .subtitle{font-size:.72rem;color:var(--text4);margin-left:10px;font-weight:400;}
+.nav-stats{display:flex;gap:14px;flex:1;flex-wrap:wrap;}
+.nav-stat{font-size:.68rem;color:var(--text3);font-weight:600;white-space:nowrap;}
+.nav-stat span{font-family:'SF Mono',ui-monospace,monospace;font-weight:700;color:var(--text);margin-left:3px;}
+.btn{background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:4px 11px;font-size:.7rem;font-weight:600;color:var(--text3);cursor:pointer;font-family:inherit;}
+.btn:hover{opacity:.8;}
+
+.container{max-width:100%;margin:0 auto;padding:20px 16px;}
+
+/* ── Chart cards (thumbnails) ── */
+.charts-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+@media(max-width:900px){.charts-grid{grid-template-columns:repeat(2,1fr);}}
+.chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px;cursor:pointer;transition:all .15s;position:relative;}
+.chart-card:hover{box-shadow:0 2px 12px rgba(0,0,0,.1);transform:translateY(-1px);}
+.chart-card .cc-title{font-size:.6rem;text-transform:uppercase;letter-spacing:.04em;color:var(--text4);font-weight:600;margin-bottom:6px;}
+.chart-card canvas{width:100%!important;height:120px!important;}
+.chart-card .cc-expand{position:absolute;top:8px;right:10px;font-size:.6rem;color:var(--text4);opacity:0;transition:opacity .15s;}
+.chart-card:hover .cc-expand{opacity:1;}
+
+/* ── Chart modal ── */
+.chart-modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:8000;display:none;align-items:center;justify-content:center;}
+.chart-modal-overlay.active{display:flex;}
+.chart-modal{background:var(--bg2);border:1px solid var(--border);border-radius:12px;width:90vw;max-width:900px;max-height:85vh;padding:20px 24px;position:relative;}
+.chart-modal .cm-title{font-size:.9rem;font-weight:700;margin-bottom:12px;}
+.chart-modal .cm-close{position:absolute;top:12px;right:16px;background:none;border:none;font-size:1.1rem;color:var(--text3);cursor:pointer;}
+.chart-modal canvas{width:100%!important;height:55vh!important;}
+
+table{width:100%;border-collapse:collapse;background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden;font-size:.74rem;}
+thead th{padding:7px 8px;text-align:left;font-size:.6rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text4);background:var(--bg3);border-bottom:1px solid var(--border);position:sticky;top:0;white-space:nowrap;}
+tbody td{padding:7px 8px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.hp-row{cursor:pointer;transition:background .1s;}
+.hp-row:hover{background:var(--bg3);}
+.hp-row:last-child td{border-bottom:none;}
+.hp-id code{font-family:'SF Mono',ui-monospace,monospace;font-size:.68rem;color:var(--accent);background:rgba(9,105,218,0.06);padding:2px 5px;border-radius:4px;}
+body.dark .hp-id code{background:rgba(88,166,255,0.08);}
+.hp-persona{max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text2);font-size:.72rem;}
+.hp-annotator{max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text2);font-size:.72rem;}
+.hp-email{max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.68rem;}
+.hp-green{color:var(--green);font-weight:600;}
+.hp-red{color:var(--red);font-weight:600;}
+.hp-amber{color:var(--text3);font-weight:600;font-style:italic;}
+.hp-pass-tag{font-size:.58rem;color:var(--green);font-weight:600;opacity:.8;}
+th[title]{cursor:help;}
+
+.footer{text-align:center;padding:16px;font-size:.65rem;color:var(--text4);}
+
+/* ── Walkthrough Tour ── */
+.wt-spotlight{position:fixed;z-index:9001;border-radius:8px;box-shadow:0 0 0 4000px rgba(0,0,0,.55);pointer-events:none;transition:all .3s ease;display:none;}
+.wt-tooltip{position:fixed;z-index:9002;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px 20px;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,.25);font-size:.82rem;line-height:1.55;transition:all .3s ease;display:none;}
+.wt-tooltip-title{font-weight:700;font-size:.9rem;margin-bottom:6px;color:var(--text);}
+.wt-tooltip-body{color:var(--text2);margin-bottom:14px;}
+.wt-tooltip-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.wt-step-count{font-size:.68rem;color:var(--text4);font-weight:500;}
+.wt-btn{border:1px solid var(--border);border-radius:6px;padding:5px 14px;font-size:.72rem;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;background:var(--bg3);color:var(--text2);}
+.wt-btn:hover{background:var(--border);}
+.wt-btn-primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+.wt-btn-primary:hover{opacity:.85;}
+.wt-btn-skip{background:transparent;border:none;color:var(--text4);font-size:.7rem;cursor:pointer;font-family:inherit;}
+.wt-btn-skip:hover{color:var(--text2);}
+.wt-arrow{position:absolute;width:12px;height:12px;background:var(--bg2);border:1px solid var(--border);transform:rotate(45deg);z-index:-1;}
+.wt-arrow-top{top:-7px;left:24px;border-right:none;border-bottom:none;}
+.wt-arrow-bottom{bottom:-7px;left:24px;border-left:none;border-top:none;}
+.wt-pulse{animation:wt-pulse-ring 1.8s ease-out infinite;}
+@keyframes wt-pulse-ring{0%{box-shadow:0 0 0 4000px rgba(0,0,0,.55),0 0 0 0 rgba(9,105,218,.4)}70%{box-shadow:0 0 0 4000px rgba(0,0,0,.55),0 0 0 10px rgba(9,105,218,0)}100%{box-shadow:0 0 0 4000px rgba(0,0,0,.55),0 0 0 0 rgba(9,105,218,0)}}
+</style>
+</head>
+<body>
+<div class="topbar" id="hp-topbar">
+  <div><h1>MCP Advanced</h1></div>
+  <div class="nav-stats">
+    <div class="nav-stat">Tasks:<span>12</span></div>
+    <div class="nav-stat">Avg Max Tools:<span>0</span></div>
+    <div class="nav-stat">Avg Min Tools:<span>0</span></div>
+  </div>
+  <button class="btn" onclick="document.body.classList.toggle('dark');this.innerHTML=document.body.classList.contains('dark')?'&#9679; Light':'&#9679; Dark';rebuildCharts()">&#9679; Dark</button>
+</div>
+<div class="container">
+
+  <!-- Chart thumbnails -->
+  <div class="charts-grid" id="hp-charts">
+    <div class="chart-card" onclick="openChart(0)">
+      <div class="cc-title">Tool Count Distribution</div>
+      <canvas id="thumb-0"></canvas>
+      <span class="cc-expand">&#x26F6; expand</span>
+    </div>
+    <div class="chart-card" onclick="openChart(1)">
+      <div class="cc-title">Tool Usage (All Tasks)</div>
+      <canvas id="thumb-1"></canvas>
+      <span class="cc-expand">&#x26F6; expand</span>
+    </div>
+    <div class="chart-card" onclick="openChart(2)">
+      <div class="cc-title">Verifier Passes</div>
+      <canvas id="thumb-2"></canvas>
+      <span class="cc-expand">&#x26F6; expand</span>
+    </div>
+    <div class="chart-card" onclick="openChart(3)">
+      <div class="cc-title">Persona Usage</div>
+      <canvas id="thumb-3"></canvas>
+      <span class="cc-expand">&#x26F6; expand</span>
+    </div>
+  </div>
+
+  <table id="hp-table">
+    <thead>
+      <tr>
+        <th>Task ID</th>
+        <th>Persona</th>
+        <th>Annotator</th>
+        <th>Annotator Email</th>
+        <th>Agent Runs</th>
+        <th>Verifier Pass</th>
+        <th>Pass@1</th>
+        <th>Criteria</th>
+        <th title="Max tools from verifier-passed runs if any passed, otherwise max tools across all runs">Max Tools</th>
+        <th title="Min tools from verifier-passed runs if any passed, otherwise min tools across all runs">Min Tools</th>
+      </tr>
+    </thead>
+    <tbody>
+<tr class="hp-row" onclick="window.location.href='69a774d61de3bd2f3b246a4f_viewer.html'">
+  <td class="hp-id"><code>69a774d61de3bd2f3b246a4f</code></td>
+  <td class="hp-persona">hana_kim</td>
+  <td class="hp-annotator">Arunima Dutta</td>
+  <td class="hp-email"><a href="https://dashboard.scale.com/corp/genai-ops-hub/search/duttaarunima2014@gmail.com+outlier" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:underline">duttaarunima2014@gmail.com+outlier</a></td>
+  <td class="">6/6</td>
+  <td class="hp-red">3/6</td>
+  <td class="hp-green">50%</td>
+  <td>18</td>
+  <td class="" title="Max tools across all valid runs (no verifier passes)">0</td>
+  <td class="" title="Min tools across all valid runs (no verifier passes)">0</td>
+</tr>
+<tr class="hp-row" onclick="window.location.href='69a774d61de3bd2f3b246a50_viewer.html'">
+  <td class="hp-id"><code>69a774d61de3bd2f3b246a50</code></td>
+  <td class="hp-persona">alejandro_fuentes</td>
+  <td class="hp-annotator">Arunima Dutta</td>
+  <td class="hp-email"><a href="https://dashboard.scale.com/corp/genai-ops-hub/search/duttaarunima2014@gmail.com+outlier" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:underline">duttaarunima2014@gmail.com+outlier</a></td>
+  <td class="">6/6</td>
+  <td class="hp-red">2/6</td>
+  <td class="hp-green">33%</td>
+  <td>17</td>
+  <td class="" title="Max tools across all valid runs (no verifier passes)">0</td>
+  <td class="" title="Min tools across all valid runs (no verifier passes)">0</td>
+</tr>
+<tr class="hp-row" onclick="window.location.href='69a774d61de3bd2f3b246a63_viewer.html'">
+  <td class="hp-id"><code>69a774d61de3bd2f3b246a63</code></td>
+  <td class="hp-persona">chloe_vance</td>
+  <td class="hp-annotator">Meher Satya Swaroop Malina</td>
+  <td class="hp-email"><a href="https://dashboard.scale.com/corp/genai-ops-hub/search/swaroop.malina@gmail.com+outlier" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:underline">swaroop.malina@gmail.com+outlier</a></td>
+  <td class="">6/6</td>
+  <td class="hp-red">1/6</td>
+  <td class="hp-green">17%</td>
+  <td>17</td>
+  <td class="" title="Max tools across all valid runs (no verifier passes)">0</td>
+  <td class="" title="Min tools across all valid runs (no verifier passes)">0</td>
+</tr>
+<tr class="hp-row" onclick="window.location.href='69a774d61de3bd2f3b246a4e_viewer.html'">
+  <td class="hp-id"><code>69a774d61de3bd2f3b246a4e</code></td>
+  <td class="hp-persona">marcus_thorne</td>
+  <td class="hp-annotator">Ali Ozkan</td>
+  <td class="hp-email"><a href="https://dashboard.scale.com/corp/genai-ops-hub/search/ozkanali98@gmail.com+outlier" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:underline">ozkanali98@gmail.com+outlier</a></td>
+  <td class="">6/6</td>
+  <td class="hp-red">1/6</td>
+  <td class="hp-green">17%</td>
+  <td>8</td>
+  <td class="" title="Max tools across all valid runs (no verifier passes)">0</td>
+  <td class="" title="Min tools across all valid runs (no verifier passes)">0</td>
+</tr>
+<tr class="hp-row" onclick="window.location.href='69a774d61de3bd2f3b246a56_viewer.html'">
+  <td class="hp-id"><code>69a774d61de3bd2f3b246a56</code></td>
+  <td class="hp-persona">emeka_diallo</td>
+  <td class="hp-annotator">Ketan Verma</td>
+  <td class="hp-email"><a href="https://dashboard.scale.com/corp/genai-ops-hub/search/ketan18710@gmail.com+outlier" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:underline">ketan18710@gmail.com+outlier</a></td>
+  <td class="">4/5</td>
+  <td class="hp-red">0/5</td>
+  <td class="hp-red">N/A</td>
+  <td>14</td>
+  <td class="" title="Max tools across all valid runs (no verifier passes)">0</td>
+  <td class="" title="Min tools across all valid runs (no verifier passes)">0</td>
+</tr>
+<tr class="hp-row" onclick="window.location.href='69a774d61de3bd2f3b246a53_viewer.html'">
+  <td class="hp-id"><code>69a774d61de3bd2f3b246a53</code></td>
+  <td class="hp-persona">mina_hashimoto</td>
+  <td class="hp-annotator">Ayush Chauhan</td>
+  <td class="hp-email"><a href="https://dashboard.scale.com/corp/genai-ops-hub/search/ayush9sept@gmail.com+outlier" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:underline">ayush9sept@gmail.com+outlier</a></td>
+  <td class="">6/6</td>
+  <td class="hp-red">1/6</td>
+  <td class="hp-green">17%</td>
+  <td>12</td>
+  <td class="" title="Max tools across all valid runs (no verifier passes)">0</td>
+  <td class="" title="Min tools across all valid runs (no verifier passes)">0</td>
+</tr>
+<tr class="hp-row" onclick="window.location.href='69a774d61de3bd2f3b246a4a_viewer.html'">
+  <td class="hp-id"><code>69a774d61de3bd2f3b246a4a</code></td>
+  <td class="hp-persona">elena_rostova</td>
+  <td class="hp-annotator">Gautam  Anand</td>
+  <td class="hp-email"><a href="https://dashboard.scale.com/corp/genai-ops-hub/search/gautam.anand+worker@scale.com" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:underline">gautam.anand+worker@scale.com</a></td>
+  <td class="">6/6</td>
+  <td class="hp-red">2/6</td>
+  <td class="hp-green">33%</td>
+  <td>10</td>
+  <td class="" title="Max tools across all valid runs (no verifier passes)">0</td>
+  <td class="" title="Min tools across all valid runs (no verifier passes)">0</td>
+</tr>
+<tr class="hp-row" onclick="window.location.href='69a774d61de3bd2f3b246a5c_viewer.html'">
+  <td class="hp-id"><code>69a774d61de3bd2f3b246a5c</code></td>
+  <td class="hp-persona">chloe_vance</td>
+  <td class="hp-annotator">Geobio Boo</td>
+  <td class="hp-email"><a href="https://dashboard.scale.com/corp/genai-ops-hub/search/geobio.boo+worker@scale.com" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:underline">geobio.boo+worker@scale.com</a></td>
+  <td class="">6/6</td>
+  <td class="hp-red">0/6</td>
+  <td class="hp-red">0%</td>
+  <td>6</td>
+  <td class="" title="Max tools across all valid runs (no verifier passes)">0</td>
+  <td class="" title="Min tools across all valid runs (no verifier passes)">0</td>
+</tr>
+<tr class="hp-row" onclick="window.location.href='69a774d61de3bd2f3b246a4b_viewer.html'">
+  <td class="hp-id"><code>69a774d61de3bd2f3b246a4b</code></td>
+  <td class="hp-persona">elena_rostova</td>
+  <td class="hp-annotator">Raju Kumar</td>
+  <td class="hp-email"><a href="https://dashboard.scale.com/corp/genai-ops-hub/search/raju.kumar@outlier.ai+outlier" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:underline">raju.kumar@outlier.ai+outlier</a></td>
+  <td class="">5/5</td>
+  <td class="hp-red">1/5</td>
+  <td class="hp-green">20%</td>
+  <td>9</td>
+  <td class="" title="Max tools across all valid runs (no verifier passes)">0</td>
+  <td class="" title="Min tools across all valid runs (no verifier passes)">0</td>
+</tr>
+<tr class="hp-row" onclick="window.location.href='69a774d61de3bd2f3b246a4c_viewer.html'">
+  <td class="hp-id"><code>69a774d61de3bd2f3b246a4c</code></td>
+  <td class="hp-persona">priya_chakrabarti</td>
+  <td class="hp-annotator">Sunjie Hou</td>
+  <td class="hp-email"><a href="https://dashboard.scale.com/corp/genai-ops-hub/search/sunjie.hou+worker@scale.com" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:underline">sunjie.hou+worker@scale.com</a></td>
+  <td class="">6/6</td>
+  <td class="hp-red">0/6</td>
+  <td class="hp-red">0%</td>
+  <td>9</td>
+  <td class="" title="Max tools across all valid runs (no verifier passes)">0</td>
+  <td class="" title="Min tools across all valid runs (no verifier passes)">0</td>
+</tr>
+<tr class="hp-row" onclick="window.location.href='69a774d61de3bd2f3b246a51_viewer.html'">
+  <td class="hp-id"><code>69a774d61de3bd2f3b246a51</code></td>
+  <td class="hp-persona">david_chen</td>
+  <td class="hp-annotator">Digbijoy Chetry</td>
+  <td class="hp-email"><a href="https://dashboard.scale.com/corp/genai-ops-hub/search/digbijoychetry12@gmail.com+outlier" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:underline">digbijoychetry12@gmail.com+outlier</a></td>
+  <td class="">3/4</td>
+  <td class="hp-red">1/4</td>
+  <td class="hp-green">25%</td>
+  <td>20</td>
+  <td class="" title="Max tools across all valid runs (no verifier passes)">0</td>
+  <td class="" title="Min tools across all valid runs (no verifier passes)">0</td>
+</tr>
+<tr class="hp-row" onclick="window.location.href='69a774d61de3bd2f3b246a65_viewer.html'">
+  <td class="hp-id"><code>69a774d61de3bd2f3b246a65</code></td>
+  <td class="hp-persona">elena_rostova</td>
+  <td class="hp-annotator">Vladimir Bazhutin</td>
+  <td class="hp-email"><a href="https://dashboard.scale.com/corp/genai-ops-hub/search/qc_cb_auditor_034@outlier.ai+outlier" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:underline">qc_cb_auditor_034@outlier.ai+outlier</a></td>
+  <td class="">5/5</td>
+  <td class="hp-red">0/5</td>
+  <td class="hp-red">0%</td>
+  <td>25</td>
+  <td class="" title="Max tools across all valid runs (no verifier passes)">0</td>
+  <td class="" title="Min tools across all valid runs (no verifier passes)">0</td>
+</tr>
+
+    </tbody>
+  </table>
+</div>
+<div class="footer">Click any row to open the task viewer &middot; Click charts to expand &middot; Press <kbd style="background:var(--bg3);border:1px solid var(--border);border-radius:3px;padding:1px 5px;font-size:.65rem">?</kbd> for walkthrough</div>
+
+<!-- Chart Modal -->
+<div class="chart-modal-overlay" id="chart-modal-overlay">
+  <div class="chart-modal">
+    <div class="cm-title" id="cm-title"></div>
+    <button class="cm-close" id="cm-close">&#10005;</button>
+    <canvas id="modal-canvas"></canvas>
+  </div>
+</div>
+
+<div class="wt-spotlight wt-pulse" id="wt-spotlight"></div>
+<div class="wt-tooltip" id="wt-tooltip"></div>
+
+<script>
+// ── Chart data ──
+var BP_MAX=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+var BP_MIN=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+var TOOL_NAMES=[];
+var TOOL_COUNTS=[];
+var VP_HIST=[4, 5, 2, 1, 0, 0, 0];
+var PERSONA_NAMES=["elena_rostova", "chloe_vance", "hana_kim", "alejandro_fuentes", "marcus_thorne", "emeka_diallo", "mina_hashimoto", "priya_chakrabarti", "david_chen"];
+var PERSONA_COUNTS=[3, 2, 1, 1, 1, 1, 1, 1, 1];
+
+function getColors(){
+  var s=getComputedStyle(document.body);
+  return {
+    accent:s.getPropertyValue('--accent').trim(),
+    green:s.getPropertyValue('--green').trim(),
+    red:s.getPropertyValue('--red').trim(),
+    text:s.getPropertyValue('--text').trim(),
+    text4:s.getPropertyValue('--text4').trim(),
+    border:s.getPropertyValue('--border').trim(),
+    bg3:s.getPropertyValue('--bg3').trim(),
+    amber:'#bf8700'
+  };
+}
+
+var thumbCharts=[null,null,null,null];
+var modalChart=null;
+
+function chartConfigs(large){
+  var c=getColors();
+  var fs=large?12:9;
+  var pad=large?16:4;
+  var leg=large;
+
+  // 0: Real box plot – two boxes: Max Tools & Min Tools across all tasks
+  var cfg0={
+    type:'boxplot',
+    data:{
+      labels:['Max Tools','Min Tools'],
+      datasets:[{
+        label:'Tool Count',
+        data:[BP_MAX, BP_MIN],
+        backgroundColor:[c.accent+'35', c.green+'35'],
+        borderColor:[c.accent, c.green],
+        borderWidth:1.5,
+        outlierRadius:0,
+        itemRadius:0,
+        meanRadius:0,
+        medianColor:[c.accent, c.green],
+      }]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{ticks:{font:{size:fs},color:c.text},grid:{display:false}},
+        y:{title:{display:large,text:'Tools',font:{size:11},color:c.text4},ticks:{font:{size:fs},color:c.text4},grid:{color:c.border+'44'}}
+      }
+    }
+  };
+
+  // 1: Tool usage bar
+  var cfg1={
+    type:'bar',
+    data:{labels:TOOL_NAMES,datasets:[{label:'Calls',data:TOOL_COUNTS,backgroundColor:c.accent+'88',borderColor:c.accent,borderWidth:1}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:fs},color:c.text4},grid:{color:c.border+'44'}},y:{ticks:{font:{size:fs},color:c.text},grid:{display:false}}}}
+  };
+
+  // 2: Verifier passes histogram
+  var vpLabels=[];for(var i=0;i<VP_HIST.length;i++)vpLabels.push(String(i));
+  var vpColors=VP_HIST.map(function(v,i){return i===0?c.red+'88':c.green+'88';});
+  var vpBorders=VP_HIST.map(function(v,i){return i===0?c.red:c.green;});
+  var cfg2={
+    type:'bar',
+    data:{labels:vpLabels,datasets:[{label:'Tasks',data:VP_HIST,backgroundColor:vpColors,borderColor:vpBorders,borderWidth:1}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{title:{display:large,text:'Verifier Passes',font:{size:11},color:c.text4},ticks:{font:{size:fs},color:c.text4},grid:{display:false}},y:{title:{display:large,text:'# Tasks',font:{size:11},color:c.text4},ticks:{stepSize:1,font:{size:fs},color:c.text4},grid:{color:c.border+'44'}}}}
+  };
+
+  // 3: Persona usage bar
+  var pColors=[c.accent+'88',c.green+'88',c.amber+'88',c.red+'88'];
+  var pBorders=[c.accent,c.green,c.amber,c.red];
+  var cfg3={
+    type:'bar',
+    data:{labels:PERSONA_NAMES,datasets:[{label:'Tasks',data:PERSONA_COUNTS,backgroundColor:PERSONA_NAMES.map(function(_,i){return pColors[i%pColors.length];}),borderColor:PERSONA_NAMES.map(function(_,i){return pBorders[i%pBorders.length];}),borderWidth:1}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:fs},color:c.text4,maxRotation:45},grid:{display:false}},y:{ticks:{stepSize:1,font:{size:fs},color:c.text4},grid:{color:c.border+'44'}}}}
+  };
+
+  return [cfg0,cfg1,cfg2,cfg3];
+}
+
+var chartTitles=['Tool Count Distribution (Box Plot)','Tool Usage Across All Tasks','Verifier Pass Distribution','Persona Usage'];
+
+function buildThumbs(){
+  var cfgs=chartConfigs(false);
+  for(var i=0;i<4;i++){
+    var ctx=document.getElementById('thumb-'+i).getContext('2d');
+    thumbCharts[i]=new Chart(ctx,cfgs[i]);
+  }
+}
+
+function rebuildCharts(){
+  for(var i=0;i<4;i++){if(thumbCharts[i])thumbCharts[i].destroy();}
+  buildThumbs();
+  if(modalChart){modalChart.destroy();modalChart=null;}
+}
+
+function openChart(idx){
+  var overlay=document.getElementById('chart-modal-overlay');
+  document.getElementById('cm-title').textContent=chartTitles[idx];
+  overlay.classList.add('active');
+  if(modalChart)modalChart.destroy();
+  var ctx=document.getElementById('modal-canvas').getContext('2d');
+  var cfgs=chartConfigs(true);
+  modalChart=new Chart(ctx,cfgs[idx]);
+}
+
+document.getElementById('cm-close').addEventListener('click',function(){
+  document.getElementById('chart-modal-overlay').classList.remove('active');
+  if(modalChart){modalChart.destroy();modalChart=null;}
+});
+document.getElementById('chart-modal-overlay').addEventListener('click',function(e){
+  if(e.target===e.currentTarget){
+    e.currentTarget.classList.remove('active');
+    if(modalChart){modalChart.destroy();modalChart=null;}
+  }
+});
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){
+    var ov=document.getElementById('chart-modal-overlay');
+    if(ov.classList.contains('active')){ov.classList.remove('active');if(modalChart){modalChart.destroy();modalChart=null;}}
+  }
+});
+
+buildThumbs();
+
+// ── Walkthrough ──
+(function(){
+  var steps=[
+    {el:'#hp-topbar',title:'Navigation Bar',body:'Quick stats at a glance: task count, total runs, and average tool usage across all tasks.',pos:'bottom'},
+    {el:'#hp-charts',title:'Analytics Charts',body:'Four interactive charts showing tool distribution, tool usage frequency, verifier pass rates, and persona breakdown. Click any chart to expand it to full screen.',pos:'bottom'},
+    {el:'#hp-table thead',title:'Task Table',body:'Each row is a task. Columns show the persona, annotator, pass rates, criteria count, and tool usage. Max/Min Tools show pass-run values when available (tagged with "(pass)"). Hover column headers for details.',pos:'bottom'},
+    {el:'.hp-row',title:'Task Row',body:'Click any row to open the full task viewer with agent trajectories, rubric scorecard, and detailed overview.',pos:'bottom'}
+  ];
+
+  var spot=document.getElementById('wt-spotlight');
+  var tip=document.getElementById('wt-tooltip');
+  var idx=0;
+
+  function show(){
+    if(idx>=steps.length){end();return;}
+    var s=steps[idx];
+    var el=document.querySelector(s.el);
+    if(!el){idx++;show();return;}
+    el.scrollIntoView({behavior:'smooth',block:'center'});
+    setTimeout(function(){
+      var r=el.getBoundingClientRect();
+      var pad=6;
+      spot.style.display='block';
+      spot.style.top=(r.top-pad)+'px';
+      spot.style.left=(r.left-pad)+'px';
+      spot.style.width=(r.width+pad*2)+'px';
+      spot.style.height=(r.height+pad*2)+'px';
+      var n=idx+1,total=steps.length;
+      var h='<div class="wt-tooltip-title">'+s.title+'</div>';
+      h+='<div class="wt-tooltip-body">'+s.body+'</div>';
+      h+='<div class="wt-tooltip-footer">';
+      h+='<span class="wt-step-count">'+n+' of '+total+'</span>';
+      h+='<div style="display:flex;gap:6px;align-items:center">';
+      h+='<button class="wt-btn-skip" onclick="window._hpEnd()">Skip</button>';
+      if(idx>0)h+='<button class="wt-btn" onclick="window._hpPrev()">Back</button>';
+      h+='<button class="wt-btn wt-btn-primary" onclick="window._hpNext()">'+(n===total?'Done':'Next')+'</button>';
+      h+='</div></div>';
+      var arrowCls='wt-arrow-top';
+      tip.innerHTML=h;
+      tip.style.display='block';
+      var tw=360,tH=tip.offsetHeight;
+      if(s.pos==='bottom'){
+        tip.style.top=(r.bottom+14)+'px';
+        tip.style.left=Math.max(8,Math.min(r.left,window.innerWidth-tw-16))+'px';
+      }else{
+        tip.style.top=(r.top-tH-14)+'px';
+        tip.style.left=Math.max(8,Math.min(r.left,window.innerWidth-tw-16))+'px';
+        arrowCls='wt-arrow-bottom';
+      }
+      var oldA=tip.querySelector('.wt-arrow');if(oldA)oldA.remove();
+      var ar=document.createElement('div');ar.className='wt-arrow '+arrowCls;tip.appendChild(ar);
+    },350);
+  }
+
+  function end(){spot.style.display='none';tip.style.display='none';try{sessionStorage.setItem('wt_done_hp','1');}catch(e){}}
+  window._hpNext=function(){idx++;show();};
+  window._hpPrev=function(){if(idx>0)idx--;show();};
+  window._hpEnd=end;
+
+  setTimeout(function(){
+    try{if(sessionStorage.getItem('wt_done_hp'))return;}catch(e){}
+    show();
+  },800);
+
+  document.addEventListener('keydown',function(e){
+    if(e.key==='?'&&!e.ctrlKey&&!e.metaKey){
+      idx=0;try{sessionStorage.removeItem('wt_done_hp');}catch(ex){}
+      show();
+    }
+  });
+})();
+</script>
+</body>
+</html>
