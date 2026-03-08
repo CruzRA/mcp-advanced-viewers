@@ -362,12 +362,15 @@ def run_pipeline(args):
 
     # ── Step 3: Generate viewers ──
     if not args.skip_generate:
-        run_step(
+        rc = run_step(
             "Generate HTML viewers",
             os.path.join(SCRIPT_DIR, "generate_viewers.py"),
             csv_path,
             "--html-dir", HTML_DIR,
         )
+        if rc != 0:
+            print("\n✗ Viewer generation failed — aborting pipeline.")
+            return
     else:
         print(f"\n⏭ Skipping viewer generation (--skip-generate)")
 

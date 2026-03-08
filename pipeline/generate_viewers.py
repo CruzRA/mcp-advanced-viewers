@@ -1554,7 +1554,17 @@ def main():
 
     for row in rows:
         task_id = row[col_taskid]
-        response_data = json.loads(row[col_response])
+        raw_response = row[col_response].strip()
+        if not raw_response:
+            print(f"Task: {task_id}")
+            print(f"  ⚠ Skipping — empty response column\n")
+            continue
+        try:
+            response_data = json.loads(raw_response)
+        except (json.JSONDecodeError, TypeError) as e:
+            print(f"Task: {task_id}")
+            print(f"  ⚠ Skipping — invalid JSON in response: {e}\n")
+            continue
         email = row[col_email].strip() if col_email is not None else ""
         annotator = row[col_annotator].strip() if col_annotator is not None else ""
 
