@@ -226,9 +226,16 @@ def main():
                 ok += 1
             time.sleep(0.2)
 
+    failed = total - ok
     print(f"\n{'='*60}")
-    print(f"Done: {ok}/{total} downloaded ({skipped} already existed)")
+    print(f"Done: {ok}/{total} downloaded ({skipped} already existed, {failed} failed)")
     print(f"{'='*60}")
+
+    if failed > 0:
+        print(f"\n✗ {failed} trajectory download(s) failed — aborting pipeline.")
+        print(f"  The S3 pre-signed URLs have likely expired (Cognito tokens last ~1 hour).")
+        print(f"  Refresh the URLs in the Google Sheet and re-run.")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

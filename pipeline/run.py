@@ -347,11 +347,14 @@ def run_pipeline(args):
         if os.path.isdir(traj_dir):
             shutil.rmtree(traj_dir)
             print(f"\n  Cleared {traj_dir}")
-        run_step(
+        rc = run_step(
             "Download trajectories",
             os.path.join(SCRIPT_DIR, "download_trajectories.py"),
             csv_path,
         )
+        if rc != 0:
+            print("\n✗ Trajectory downloads failed — aborting pipeline.")
+            return
     elif args.skip_download:
         print(f"\n⏭ Skipping trajectory download (--skip-download)")
     else:
