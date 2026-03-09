@@ -237,6 +237,8 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
+    parser.add_argument("--csv", default=None,
+                        help="Path to a local CSV file (skips Google Sheets pull)")
     parser.add_argument("--sheet-id", default=DEFAULT_SHEET_ID,
                         help="Google Sheet ID (default: %(default)s)")
     parser.add_argument("--gid", type=int, default=DEFAULT_GID,
@@ -305,7 +307,10 @@ def run_pipeline(args):
     print("=" * 60)
     print("MCP Advanced Viewer Pipeline")
     print("=" * 60)
-    print(f"  Sheet:  {args.sheet_id}")
+    if args.csv:
+        print(f"  Source: {os.path.abspath(args.csv)}")
+    else:
+        print(f"  Sheet:  {args.sheet_id}")
     print(f"  Output: {OUTPUT_DIR}")
 
     # Fresh start?
@@ -314,15 +319,36 @@ def run_pipeline(args):
         os.makedirs(OUTPUT_DIR, exist_ok=True)
         print("  Cleared output directory")
 
-    # ── Step 1: Pull from Google Sheets ──
-    print(f"\n{'='*60}")
-    print("STEP 1: Pull data from Google Sheets")
-    print("=" * 60)
+    # ── Step 1: Pull data ──
+    if args.csv:
+        print(f"\n{'='*60}")
+        print("STEP 1: Load data from local CSV")
+        print("=" * 60)
 
-    rows = pull_sheet(args.sheet_id, args.gid)
-    if not rows:
-        print("  ✗ No data in sheet")
-        return
+        csv_src = os.path.abspath(args.csv)
+        if not os.path.isfile(csv_src):
+            print(f"  ✗ CSV file not found: {csv_src}")
+            return
+
+        with open(csv_src, newline="") as f:
+            reader = csv.DictReader(f)
+            rows = [{k.lower().strip(): v for k, v in row.items()} for row in reader]
+
+        if not rows:
+            print("  ✗ CSV file is empty")
+            return
+
+        print(f"  Source: {csv_src}")
+        print(f"  Rows:  {len(rows)}")
+    else:
+        print(f"\n{'='*60}")
+        print("STEP 1: Pull data from Google Sheets")
+        print("=" * 60)
+
+        rows = pull_sheet(args.sheet_id, args.gid)
+        if not rows:
+            print("  ✗ No data in sheet")
+            return
 
     cols = set(rows[0].keys())
     required = {"taskid", "response"}
