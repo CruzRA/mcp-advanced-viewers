@@ -20,7 +20,9 @@ csv.field_size_limit(sys.maxsize)
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 OUT_DIR = os.path.join(SCRIPT_DIR, "trajectories")
-os.makedirs(OUT_DIR, exist_ok=True)
+if not os.path.exists(OUT_DIR):
+    os.makedirs(OUT_DIR, exist_ok=True)
+    print(f"  Created {OUT_DIR}")
 
 
 def _extract_urls_from_blob(blob: dict) -> list[tuple[str, str, int, str]]:

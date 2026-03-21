@@ -30,7 +30,7 @@ pipeline/
 pip install -r requirements.txt
 ```
 
-### 2. Set Up Google Service Account
+### 2. Set Up Google Service Account (deprecated)
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Create a project (or use existing)
@@ -209,3 +209,10 @@ python generate_viewers.py path/to/tasks.csv
 | `trajectory_urls` | | JSON `{filename: signed_url}` for trajectory downloads |
 | `email` | | Annotator email (shown in viewer) |
 | `annotator` | | Annotator name (shown in viewer) |
+
+
+analysis -> https://gist.github.com/RCScale/f0d71248dbf9ed74c80bc341c01d6c4d
+pipeline_review -> https://cruzra.github.io/mcp-advanced-viewers/index.html
+
+Compass -> https://dashboard.scale.com/corp/genai-ops-hub/compass/playground?workflow=cmp_d59dda3b5f3066b26b7027fe7175c134
+Query -> https://redash.scale.com/queries/292851/source

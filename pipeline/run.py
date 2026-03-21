@@ -47,7 +47,7 @@ OUTPUT_DIR = os.path.join(SCRIPT_DIR, "output")          # CSVs, trajectories, d
 REPO_ROOT = os.path.dirname(SCRIPT_DIR)                   # repo root
 HTML_DIR = os.path.join(REPO_ROOT, "docs")                # HTML goes to docs/ for GitHub Pages
 CREDS_DIR = os.path.join(SCRIPT_DIR, "credentials")
-
+QUERY_ID = 294604
 # ── Defaults ──────────────────────────────────────────────────────
 DEFAULT_SHEET_ID = "1PT1eA-YhTLs-DSV4BtNyFs5MkpqOhM9zxJwzyMJGTYk"
 DEFAULT_GID = 0
@@ -68,6 +68,20 @@ def find_sa_key():
     print("✗ No service account key found.")
     print(f"  Place your Google service account JSON key in: {CREDS_DIR}/")
     sys.exit(1)
+
+def pull_redash():
+    """Pull all rows from a Redash query. Returns list of dicts."""
+    from redash import Redash
+    redash = Redash()
+    redash.folder = OUTPUT_DIR
+    redash.file_name = os.path.join(OUTPUT_DIR, "sheet_data.csv")
+    redash.query_id = QUERY_ID
+    redash.params = {}
+    redash.process(100)
+    with open(redash.file_name, "r") as f:
+        reader = csv.DictReader(f)
+        rows = list(reader) 
+    return rows
 
 
 def pull_sheet(sheet_id, gid=0):
@@ -310,7 +324,7 @@ def run_pipeline(args):
     if args.csv:
         print(f"  Source: {os.path.abspath(args.csv)}")
     else:
-        print(f"  Sheet:  {args.sheet_id}")
+        print(f"  Redash:  {QUERY_ID}")
     print(f"  Output: {OUTPUT_DIR}")
 
     # Fresh start?
@@ -342,13 +356,13 @@ def run_pipeline(args):
         print(f"  Rows:  {len(rows)}")
     else:
         print(f"\n{'='*60}")
-        print("STEP 1: Pull data from Google Sheets")
+        print("STEP 1: Pull data from Redash")
         print("=" * 60)
 
-        rows = pull_sheet(args.sheet_id, args.gid)
-        if not rows:
-            print("  ✗ No data in sheet")
-            return
+    rows = pull_redash()
+    if not rows:
+        print("  ✗ No data in sheet")
+        return
 
     cols = set(rows[0].keys())
     required = {"taskid", "response"}
@@ -370,9 +384,12 @@ def run_pipeline(args):
     # ── Step 2: Download trajectories ──
     if not args.skip_download and has_traj:
         traj_dir = os.path.join(OUTPUT_DIR, "trajectories")
-        if os.path.isdir(traj_dir):
+        if args.fresh and os.path.isdir(traj_dir):
             shutil.rmtree(traj_dir)
             print(f"\n  Cleared {traj_dir}")
+        if not os.path.exists(traj_dir):
+            os.makedirs(traj_dir, exist_ok=True)
+            print(f"  Created {traj_dir}")
         rc = run_step(
             "Download trajectories",
             os.path.join(SCRIPT_DIR, "download_trajectories.py"),
