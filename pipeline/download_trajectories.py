@@ -138,6 +138,9 @@ def main():
         task_id = row.get("taskid", row.get("task", ""))
         if not task_id:
             continue
+        attempt_id = row.get("attemptid")
+        if not attempt_id:
+            continue
 
         seen = {}  # fname -> (step_key, url, run_idx)
 
@@ -181,7 +184,7 @@ def main():
                     if url.startswith("s3://"):
                         all_s3_uris.add(url)
 
-        tasks.append((task_id, seen))
+        tasks.append((task_id, attempt_id, seen))
 
     # Resolve any s3:// URIs in bulk
     s3_map = {}
@@ -194,12 +197,14 @@ def main():
     ok = 0
     skipped = 0
 
-    for task_id, seen in tasks:
-        task_dir = os.path.join(OUT_DIR, task_id)
+    task_number = 0
+    for task_id, attempt_id, seen in tasks:
+        task_number += 1
+        task_dir = os.path.join(OUT_DIR, task_id, attempt_id)
         os.makedirs(task_dir, exist_ok=True)
 
         print(f"\n{'='*60}")
-        print(f"Task: {task_id}  —  {len(seen)} unique trajectories")
+        print(f"Task: {task_number}/{len(tasks)}  Task: {task_id}  Attempt: {attempt_id}  —  {len(seen)} unique trajectories")
         print(f"{'='*60}")
 
         for fname, (sk, raw_url, run_idx) in sorted(seen.items()):

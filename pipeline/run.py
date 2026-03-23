@@ -359,10 +359,10 @@ def run_pipeline(args):
         print("STEP 1: Pull data from Redash")
         print("=" * 60)
 
-    rows = pull_redash()
-    if not rows:
-        print("  ✗ No data in sheet")
-        return
+        rows = pull_redash()
+        if not rows:
+            print("  ✗ No data in sheet")
+            return
 
     cols = set(rows[0].keys())
     required = {"taskid", "response"}

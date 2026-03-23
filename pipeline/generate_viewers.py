@@ -1466,7 +1466,7 @@ var PROMPT_TEXT=`{_js_safe(prompt)}`;
     return html_out, stats
 
 
-def load_trajectories_for_task(task_id, response_data):
+def load_trajectories_for_task(task_id, attempt_id, response_data):
     """Load trajectory files and parse into messages for each run.
 
     Looks for trajectory filenames in three locations (first match wins per run):
@@ -1474,7 +1474,7 @@ def load_trajectories_for_task(task_id, response_data):
       2. metadata.agentRuns[ri].trajectoryS3Uri
       3. metadata.agentRuns[ri].taskStepContext.prompt_responses[].agent_trajectory_s3_uri
     """
-    traj_dir = os.path.join(TRAJ_DIR, task_id)
+    traj_dir = os.path.join(TRAJ_DIR, task_id, attempt_id)
     if not os.path.isdir(traj_dir):
         return {}
 
@@ -1547,6 +1547,8 @@ def main():
     # Detect column layout
     hdr_lower = [h.lower().strip() for h in header]
     col_taskid = hdr_lower.index("taskid")
+    col_attemptid = hdr_lower.index("attemptid")
+    col_review_level = hdr_lower.index("review_level")
     col_response = hdr_lower.index("response")
     col_traj = hdr_lower.index("trajectory_urls") if "trajectory_urls" in hdr_lower else None
     col_email = hdr_lower.index("email") if "email" in hdr_lower else None
@@ -1554,15 +1556,17 @@ def main():
 
     for row in rows:
         task_id = row[col_taskid]
+        attempt_id = row[col_attemptid]
         raw_response = row[col_response].strip()
+        review_level = row[col_review_level].strip() if col_review_level is not None else None
         if not raw_response:
-            print(f"Task: {task_id}")
+            print(f"Task: {task_id}  Attempt: {attempt_id}")
             print(f"  ⚠ Skipping — empty response column\n")
             continue
         try:
             response_data = json.loads(raw_response)
         except (json.JSONDecodeError, TypeError) as e:
-            print(f"Task: {task_id}")
+            print(f"Task: {task_id}  Attempt: {attempt_id}")
             print(f"  ⚠ Skipping — invalid JSON in response: {e}\n")
             continue
         email = row[col_email].strip() if col_email is not None else ""
@@ -1592,12 +1596,12 @@ def main():
                     # (download_trajectories.py already downloaded the files)
                     pass
 
-        print(f"Task: {task_id}")
+        print(f"Task: {task_id}  Attempt: {attempt_id}")
         if annotator:
             print(f"  Annotator: {annotator} ({email})")
 
         # Load trajectory data as messages
-        traj_messages_map = load_trajectories_for_task(task_id, merged)
+        traj_messages_map = load_trajectories_for_task(task_id, attempt_id, merged)
         total_msgs = sum(len(m) for m in traj_messages_map.values())
         print(f"  Loaded trajectories for {len(traj_messages_map)} runs ({total_msgs} total messages)")
 
@@ -1610,7 +1614,7 @@ def main():
 
         size_kb = len(html) // 1024
         print(f"  -> {out_path} ({size_kb}KB)")
-        generated.append({"task_id": task_id, "path": out_path, "size": len(html), "stats": stats})
+        generated.append({"task_id": task_id, "attempt_id": attempt_id, "review_level": review_level, "path": out_path, "size": len(html), "stats": stats})
         print()
 
     print(f"Done: {len(generated)} viewer(s) generated")
@@ -1630,6 +1634,7 @@ def generate_homepage(generated):
     for g in generated:
         s = g["stats"]
         tid = s["task_id"]
+        review_level = g["review_level"]
         viewer_file = f"{tid}_viewer.html"
 
         vp_display = s["verifier_display"]
@@ -1686,6 +1691,7 @@ def generate_homepage(generated):
 
         rows_html += f"""<tr class="hp-row" onclick="window.location.href='{viewer_file}'">
   <td class="hp-id"><code>{_esc(tid)}</code></td>
+  <td class="hp-review-level">{_esc(review_level)}</td>
   <td class="hp-persona">{_esc(s["persona"])}</td>
   <td class="hp-annotator">{_esc(annotator_val) if annotator_val else '&mdash;'}</td>
   <td class="hp-email">{email_link}</td>
@@ -1875,6 +1881,7 @@ th[title]{{cursor:help;}}
     <thead>
       <tr>
         <th>Task ID</th>
+        <th>Review Level</th>
         <th>Persona</th>
         <th>Annotator</th>
         <th>Annotator Email</th>

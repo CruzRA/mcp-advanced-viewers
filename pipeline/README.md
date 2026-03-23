@@ -214,5 +214,5 @@ python generate_viewers.py path/to/tasks.csv
 analysis -> https://gist.github.com/RCScale/f0d71248dbf9ed74c80bc341c01d6c4d
 pipeline_review -> https://cruzra.github.io/mcp-advanced-viewers/index.html
 
-Compass -> https://dashboard.scale.com/corp/genai-ops-hub/compass/playground?workflow=cmp_d59dda3b5f3066b26b7027fe7175c134
+Compass -> https://dashboard.scale.com/corp/genai-ops-hub/compass/playground?workflow=cmp_3474b205422eba5c3898d501dea48400
 Query -> https://redash.scale.com/queries/292851/source
